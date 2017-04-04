@@ -5,8 +5,22 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:WpfApp1"
         mc:Ignorable="d"
-        Title="MainWindow" Height="350" Width="525">
+        Title="MainWindow" Height="350" Width="525" Closed="Window_Closed">
     <Grid>
-        
+        <Grid.RowDefinitions>
+            <RowDefinition Height="30"/>
+            <RowDefinition/>
+        </Grid.RowDefinitions>
+        <Grid Grid.Row="0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition/>
+                <ColumnDefinition/>
+                <ColumnDefinition/>
+            </Grid.ColumnDefinitions>
+            <Button Height="28" Width="100" Content="Test" Click="Test_Click" Grid.Column="0"/>
+            <TextBlock Height="23" Text="Empty" x:Name="_data" Grid.Column="1"/>
+            <TextBlock Height="23" Text="Empty" x:Name="_dataInit" Grid.Column="2"/>
+        </Grid>
+        <DataGrid Grid.Row="1" x:Name="_dataGrid"/>
     </Grid>
 </Window>
