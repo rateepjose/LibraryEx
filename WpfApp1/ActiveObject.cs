@@ -14,12 +14,10 @@ namespace WpfApp1
         private bool _initialized;
         public IWorkQueue WorkQueue { get; private set; }
 
-        public TimeSpan PollFrequency { get; set; } = TimeSpan.FromMilliseconds(50);
-
         #region Constructor and Destructors
-        public ActiveObjectPart(string partName)
+        public ActiveObjectPart(string partName, TimeSpan? waitTime = null)
         {
-            WorkQueue = new CmdQueue();
+            WorkQueue = new CmdQueue() { WaitTime = waitTime ?? TimeSpan.FromMilliseconds(50) };
             _initialized = false;
             _name = partName;
         }
@@ -46,22 +44,19 @@ namespace WpfApp1
         {
             while (_runThread)
             {
-                Thread.Sleep(PollFrequency);
                 try
                 {
-                    RunQueuedCommandsIfAny();
+                    RunOneQueuedCommand();
                     OnService();
                 }
                 catch (Exception ex) { System.Diagnostics.Trace.WriteLine(ex.Message); }
             }
         }
 
-        private void RunQueuedCommandsIfAny()
+        private void RunOneQueuedCommand()
         {
-            if (WorkQueue.Empty) { return; }
             ICommand cmd;
-            WorkQueue.Pop(out cmd);
-            cmd.RunCmdFunc();
+            if (WorkQueue.Pop(out cmd).IsNullOrEmpty()) { cmd.RunCmdFunc(); }
         }
 
         protected virtual void OnService() { }
@@ -110,12 +105,12 @@ namespace WpfApp1
         #region Command class
         private class Command : ICommand
         {
-            #region CommandStatus
-            public bool IsComplete => _cmdExectutionStatus == CommandExecutionStatus.Completed;
+            #region ICommandStatus
+            public bool IsComplete => _cmdExecutionStatus == CommandExecutionStatus.Completed;
 
-            public bool IsProcessing => _cmdExectutionStatus == CommandExecutionStatus.Processing;
+            public bool IsProcessing => _cmdExecutionStatus == CommandExecutionStatus.Processing;
 
-            public bool IsQueued => _cmdExectutionStatus == CommandExecutionStatus.Queued;
+            public bool IsQueued => _cmdExecutionStatus == CommandExecutionStatus.Queued;
 
             private string _errorCode;
             public string ErrorCode { get { return _errorCode; } }
@@ -123,47 +118,51 @@ namespace WpfApp1
             private ManualResetEventSlim _commandCompletedEvent = new ManualResetEventSlim();
             public string WaitForCompletion()
             {
-                if (_cmdExectutionStatus == CommandExecutionStatus.Completed) { return ErrorCode; }
+                if (_cmdExecutionStatus == CommandExecutionStatus.Completed) { return ErrorCode; }
                 try { _commandCompletedEvent.Wait(); } catch { }
                 return ErrorCode;
             }
             #endregion
 
-            #region CommandProxy
+            #region ICommandProxy
             public string Run() => PackAndEnqueue().WaitForCompletion();
 
             public ICommandStatus Start() => PackAndEnqueue();
 
             private ICommandStatus PackAndEnqueue()
             {
-                CommandExecutionStatus ces = _cmdExectutionStatus;
+                CommandExecutionStatus ces = _cmdExecutionStatus;
                 if (!(ces == CommandExecutionStatus.Completed
                     || ces == CommandExecutionStatus.NotQueued)) { return this; }
 
                 _commandCompletedEvent.Reset();
-                _cmdExectutionStatus = CommandExecutionStatus.Queued;
+                _cmdExecutionStatus = CommandExecutionStatus.Queued;
                 return _queue.Push(this);
             }
             #endregion
 
+            #region ICommandInternal
+
             public string CmdName { get; private set; }
             public Func<string> CmdFunc { get; private set; }
-            private volatile CommandExecutionStatus _cmdExectutionStatus = CommandExecutionStatus.NotQueued;
-            private IWorkQueue _queue;
-            public Command(string cmdName, Func<string> func, IWorkQueue queue) { CmdName = cmdName; CmdFunc = func; _queue = queue; }
-
             public void RunCmdFunc()
             {
                 _errorCode = string.Empty;
-                _cmdExectutionStatus = CommandExecutionStatus.Processing;
+                _cmdExecutionStatus = CommandExecutionStatus.Processing;
                 try { _errorCode = CmdFunc(); }
                 catch(Exception ex) { _errorCode = ex.Message; }
                 finally
                 {
-                    _cmdExectutionStatus = CommandExecutionStatus.Completed;
+                    _cmdExecutionStatus = CommandExecutionStatus.Completed;
                     _commandCompletedEvent.Set();
                 }
             }
+
+            #endregion
+
+            private volatile CommandExecutionStatus _cmdExecutionStatus = CommandExecutionStatus.NotQueued;
+            private IWorkQueue _queue;
+            public Command(string cmdName, Func<string> func, IWorkQueue queue) { CmdName = cmdName; CmdFunc = func; _queue = queue; }
         }
         #endregion
     }
@@ -211,25 +210,33 @@ namespace WpfApp1
 
     public class CmdQueue : IWorkQueue
     {
-        private object _lock;
         private Queue<ICommand> _queue;
 
         public CmdQueue()
         {
-            _lock = new object();
             _queue = new Queue<ICommand>();
         }
 
-        public bool Empty { get { lock (_lock) { return _queue.Count == 0; } } }
+        public TimeSpan WaitTime { get; set; }
+
+        public bool Empty { get { lock (_queue) { return _queue.Count == 0; } } }
 
         public string Pop(out ICommand command)
         {
             command = null;
-            lock (_lock) { try { command = _queue.Dequeue(); } catch (Exception ex) { return ex.Message; } }
+            lock (_queue)
+            {
+                try
+                {
+                    if (0 == _queue.Count) { if (!Monitor.Wait(_queue, WaitTime)) { return "Queue is empty after wait"; } }
+                    command = _queue.Dequeue();
+                }
+                catch (Exception ex) { return ex.Message; }
+            }
             return string.Empty;
         }
 
-        public ICommandStatus Push(ICommand command) { lock (_lock) { _queue.Enqueue(command); } return command; }
+        public ICommandStatus Push(ICommand command) { lock (_queue) { _queue.Enqueue(command); if (1 == _queue.Count) { Monitor.Pulse(_queue); } } return command; }
     }
 
     public static class Extensions

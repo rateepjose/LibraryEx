@@ -26,7 +26,7 @@ namespace WpfApp1
         public MainWindow()
         {
             InitializeComponent();
-            _aop = new ActiveObjectPart("test") { PollFrequency = TimeSpan.FromMilliseconds(100), };
+            _aop = new ActiveObjectPart("test", TimeSpan.FromMilliseconds(100));
             string ec = _aop.Initialize();
             _dt = new DispatcherTimer() { Interval = TimeSpan.FromMilliseconds(333) };
             _dt.Tick += UI_Update;
@@ -37,7 +37,7 @@ namespace WpfApp1
         private void UI_Update(object sender, EventArgs e)
         {
             _data.Text = _multiCommandResult;
-            //dataGrid.ItemsSource = _commands.ToArray();
+            _dataGrid.ItemsSource = _commands.ToArray();
         }
 
         private void Window_Closed(object sender, EventArgs e)
@@ -61,11 +61,20 @@ namespace WpfApp1
         public string _multiCommandResult { get; set; } = "Empty";
         private string RunCommand(int i)
         {
-            for (long j = 0; j < 1; ++j)
-                for (long k = 0; k < 500; ++k) { }
+            for (long j = 0; j < 2000; ++j)
+                for (long k = 0; k < 50000; ++k) { }
             _multiCommandResult =  "MultiCommand: Index ={0}".FormatEx(i);
             System.Diagnostics.Trace.WriteLine(_multiCommandResult);
             return _multiCommandResult;
+        }
+
+        private int _indexMulti = 0;
+        private void Test_ClickMulti(object sender, RoutedEventArgs e)
+        {
+            int i = ++_indexMulti;
+            _dataInit.Text = _indexMulti.ToString();
+            _commands.Add(_aop.CreateCommand("MULTICOMMAND", () => RunCommand(i)).Start());
+            System.Diagnostics.Trace.WriteLine("Test_Click");
         }
     }
 }
