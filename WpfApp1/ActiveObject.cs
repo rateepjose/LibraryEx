@@ -160,9 +160,34 @@ namespace WpfApp1
 
             #endregion
 
+            #region IDisposable
+
+            public void Dispose()
+            {
+                Dispose(true);
+                GC.SuppressFinalize(this);
+            }
+
+            private bool _disposed = false;
+            protected virtual void Dispose(bool disposing)
+            {
+                if (_disposed) { return; }
+
+                if (disposing) { _commandCompletedEvent.Dispose(); }
+
+                _disposed = true;
+            }
+
+            #endregion
+
             private volatile CommandExecutionStatus _cmdExecutionStatus = CommandExecutionStatus.NotQueued;
             private IWorkQueue _queue;
+
+            #region Constructor and Destructors
+
             public Command(string cmdName, Func<string> func, IWorkQueue queue) { CmdName = cmdName; CmdFunc = func; _queue = queue; }
+
+            #endregion
         }
         #endregion
     }
@@ -198,7 +223,7 @@ namespace WpfApp1
         void RunCmdFunc();
     }
 
-    public interface ICommand : ICommandProxy, ICommandStatus, ICommandInternal { }
+    public interface ICommand : ICommandProxy, ICommandStatus, ICommandInternal, IDisposable { }
 
 
     public interface IWorkQueue

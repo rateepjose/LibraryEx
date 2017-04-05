@@ -52,17 +52,17 @@ namespace WpfApp1
         {
             int i = ++_index;
             _dataInit.Text = _index.ToString();
-            //_commands.Add(_aop.CreateCommand("MULTICOMMAND", () => RunCommand(i)).Start());
             if (icp == null) { icp = _aop.CreateCommand("MULTICOMMAND", () => RunCommand(_index)); _commands.Add(icp.Start()); }
             else { icp.Start(); }
-            System.Diagnostics.Trace.WriteLine("Test_Click");
+            //MessageBox.Show(_aop.CreateCommand("Multi", () => RunCommand(_index)).Run());
+            System.Diagnostics.Trace.WriteLine("Test_Click{0}".FormatEx(i));
         }
 
         public string _multiCommandResult { get; set; } = "Empty";
         private string RunCommand(int i)
         {
             for (long j = 0; j < 2000; ++j)
-                for (long k = 0; k < 50000; ++k) { }
+                for (long k = 0; k < 500000; ++k) { }
             _multiCommandResult =  "MultiCommand: Index ={0}".FormatEx(i);
             System.Diagnostics.Trace.WriteLine(_multiCommandResult);
             return _multiCommandResult;
@@ -74,7 +74,7 @@ namespace WpfApp1
             int i = ++_indexMulti;
             _dataInit.Text = _indexMulti.ToString();
             _commands.Add(_aop.CreateCommand("MULTICOMMAND", () => RunCommand(i)).Start());
-            System.Diagnostics.Trace.WriteLine("Test_Click");
+            System.Diagnostics.Trace.WriteLine("Test_Click{0}".FormatEx(i));
         }
     }
 }
