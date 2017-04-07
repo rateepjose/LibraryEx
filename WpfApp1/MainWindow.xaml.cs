@@ -52,28 +52,32 @@ namespace WpfApp1
         {
             int i = ++_index;
             _dataInit.Text = _index.ToString();
-            if (icp == null) { icp = _aop.CreateCommand("MULTICOMMAND", () => RunCommand(_index)); _commands.Add(icp.Start()); }
+            if (icp == null) { icp = _aop.CreateCommand("MULTICOMMAND", (x) => RunCommand(x, _index)); _commands.Add(icp.Start()); }
             else { icp.Start(); }
             //MessageBox.Show(_aop.CreateCommand("Multi", () => RunCommand(_index)).Run());
             System.Diagnostics.Trace.WriteLine("Test_Click{0}".FormatEx(i));
         }
 
         public string _multiCommandResult { get; set; } = "Empty";
-        private string RunCommand(int i)
+        private string RunCommand(ICommandParams cmdParams, int i)
         {
             for (long j = 0; j < 2000; ++j)
-                for (long k = 0; k < 500000; ++k) { }
+                for (long k = 0; k < 200000; ++k) { }
             _multiCommandResult =  "MultiCommand: Index ={0}".FormatEx(i);
             System.Diagnostics.Trace.WriteLine(_multiCommandResult);
-            return _multiCommandResult;
+
+            cmdParams.SetOutputParams(new OutputParams1() { Value = i });
+            return i % 2 != 0 ? _multiCommandResult : string.Empty;
         }
+
+        public class OutputParams1 : IOutputParams { public int Value { get; set; } }
 
         private int _indexMulti = 0;
         private void Test_ClickMulti(object sender, RoutedEventArgs e)
         {
             int i = ++_indexMulti;
             _dataInit.Text = _indexMulti.ToString();
-            _commands.Add(_aop.CreateCommand("MULTICOMMAND", () => RunCommand(i)).Start());
+            _commands.Add(_aop.CreateCommand("MULTICOMMAND", (x) => RunCommand(x, i)).Start());
             System.Diagnostics.Trace.WriteLine("Test_Click{0}".FormatEx(i));
         }
     }

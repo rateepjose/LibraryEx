@@ -15,6 +15,7 @@ namespace WpfApp1
         public IWorkQueue WorkQueue { get; private set; }
 
         #region Constructor and Destructors
+
         public ActiveObjectPart(string partName, TimeSpan? waitTime = null)
         {
             WorkQueue = new CmdQueue() { WaitTime = waitTime ?? TimeSpan.FromMilliseconds(50) };
@@ -35,7 +36,6 @@ namespace WpfApp1
 
             _disposed = true;
         }
-
 
         #endregion
 
@@ -99,7 +99,7 @@ namespace WpfApp1
             return string.Empty;
         }
 
-        public ICommandProxy CreateCommand(string cmdName, Func<string> func) => new Command(cmdName, func, WorkQueue);
+        public ICommandProxy CreateCommand(string cmdName, Func<ICommandParams, string> func) => new Command(cmdName, func, WorkQueue);
 
 
         #region Command class
@@ -122,6 +122,9 @@ namespace WpfApp1
                 try { _commandCompletedEvent.Wait(); } catch { }
                 return ErrorCode;
             }
+
+            private IOutputParams _outputParams;
+            public IOutputParams OutputParams => _outputParams;
             #endregion
 
             #region ICommandProxy
@@ -144,12 +147,13 @@ namespace WpfApp1
             #region ICommandInternal
 
             public string CmdName { get; private set; }
-            public Func<string> CmdFunc { get; private set; }
+            public Func<ICommandParams, string> CmdFunc { get; private set; }
             public void RunCmdFunc()
             {
+                _outputParams = null;
                 _errorCode = string.Empty;
                 _cmdExecutionStatus = CommandExecutionStatus.Processing;
-                try { _errorCode = CmdFunc(); }
+                try { _errorCode = CmdFunc(this); }
                 catch(Exception ex) { _errorCode = ex.Message; }
                 finally
                 {
@@ -157,6 +161,12 @@ namespace WpfApp1
                     _commandCompletedEvent.Set();
                 }
             }
+
+            #endregion
+
+            #region ICommandParams
+
+            public void SetOutputParams(IOutputParams outputParams) => _outputParams = outputParams;
 
             #endregion
 
@@ -185,7 +195,7 @@ namespace WpfApp1
 
             #region Constructor and Destructors
 
-            public Command(string cmdName, Func<string> func, IWorkQueue queue) { CmdName = cmdName; CmdFunc = func; _queue = queue; }
+            public Command(string cmdName, Func<ICommandParams, string> func, IWorkQueue queue) { CmdName = cmdName; CmdFunc = func; _queue = queue; }
 
             #endregion
         }
@@ -208,6 +218,7 @@ namespace WpfApp1
         bool IsQueued { get; }
         string ErrorCode { get; }
         string WaitForCompletion();
+        IOutputParams OutputParams { get; }
     }
 
     public interface ICommandProxy
@@ -219,11 +230,18 @@ namespace WpfApp1
     public interface ICommandInternal
     {
         string CmdName { get; }
-        Func<string> CmdFunc { get; }
+        Func<ICommandParams, string> CmdFunc { get; }
         void RunCmdFunc();
     }
 
-    public interface ICommand : ICommandProxy, ICommandStatus, ICommandInternal, IDisposable { }
+    public interface IOutputParams { }
+
+    public interface ICommandParams
+    {
+        void SetOutputParams(IOutputParams outputParams);
+    }
+
+    public interface ICommand : ICommandProxy, ICommandStatus, ICommandInternal, ICommandParams, IDisposable { }
 
 
     public interface IWorkQueue
