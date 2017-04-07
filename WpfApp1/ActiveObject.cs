@@ -47,6 +47,7 @@ namespace WpfApp1
                 try
                 {
                     RunOneQueuedCommand();
+                    ServiceFunc?.Invoke();
                     OnService();
                 }
                 catch (Exception ex) { System.Diagnostics.Trace.WriteLine(ex.Message); }
@@ -60,6 +61,8 @@ namespace WpfApp1
         }
 
         protected virtual void OnService() { }
+
+        public Action ServiceFunc { get; set; } = null;
 
         public string Start()
         {
