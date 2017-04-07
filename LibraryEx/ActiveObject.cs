@@ -57,7 +57,7 @@ namespace WpfApp1
         private void RunOneQueuedCommand()
         {
             ICommand cmd;
-            if (WorkQueue.Pop(out cmd).IsNullOrEmpty()) { cmd.RunCmdFunc(); }
+            if (WorkQueue.Pull(out cmd).IsNullOrEmpty()) { cmd.RunCmdFunc(); }
         }
 
         protected virtual void OnService() { }
@@ -157,7 +157,7 @@ namespace WpfApp1
                 _errorCode = string.Empty;
                 _cmdExecutionStatus = CommandExecutionStatus.Processing;
                 try { _errorCode = CmdFunc(this); }
-                catch(Exception ex) { _errorCode = ex.Message; }
+                catch (Exception ex) { _errorCode = ex.Message; }
                 finally
                 {
                     _cmdExecutionStatus = CommandExecutionStatus.Completed;
@@ -251,23 +251,20 @@ namespace WpfApp1
     {
         bool Empty { get; }
         ICommandStatus Push(ICommand command);
-        string Pop(out ICommand command);
+        string Pull(out ICommand command);
     }
 
     public class CmdQueue : IWorkQueue
     {
         private Queue<ICommand> _queue;
 
-        public CmdQueue()
-        {
-            _queue = new Queue<ICommand>();
-        }
+        public CmdQueue() => _queue = new Queue<ICommand>();
 
         public TimeSpan WaitTime { get; set; }
 
         public bool Empty { get { lock (_queue) { return _queue.Count == 0; } } }
 
-        public string Pop(out ICommand command)
+        public string Pull(out ICommand command)
         {
             command = null;
             lock (_queue)
