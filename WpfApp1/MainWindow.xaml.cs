@@ -27,18 +27,35 @@ namespace WpfApp1
         public MainWindow()
         {
             InitializeComponent();
-            _aop = new ActiveObjectPart("test", TimeSpan.FromMilliseconds(100));
+            _testData = new RefObjectObserver<Data>(_test);
+            _aop = new ActiveObjectPart("test", TimeSpan.FromMilliseconds(1)) { ServiceFunc = RunningIndicatorFunc, };
             string ec = _aop.Initialize();
-            _dt = new DispatcherTimer() { Interval = TimeSpan.FromMilliseconds(333) };
+            _dt = new DispatcherTimer() { Interval = TimeSpan.FromMilliseconds(2) };
             _dt.Tick += UI_Update;
             _dt.Start();
         }
 
+        private char[] _runningIndicatorArray = { '|', '/', '-', '\\', };
+        private int _runningIndicatorIndex = 0;
+        //private void RunningIndicatorFunc() => _runningIndicatorIndex = _runningIndicatorIndex >= 3 ? 0 : ++_runningIndicatorIndex;
+
+        private class Data { public int Index { get; set; } }
+        private RefObjectPublisher<Data> _test = new RefObjectPublisher<Data>() { Object = new Data() { Index = 0, } };
+        private void RunningIndicatorFunc()
+        {
+            _runningIndicatorIndex = _runningIndicatorIndex >= 3 ? 0 : ++_runningIndicatorIndex;
+            _test.Object = new Data() { Index = _runningIndicatorIndex };
+        }
+
         private List<ICommandStatus> _commands = new List<ICommandStatus>(100);
+        private RefObjectObserver<Data> _testData;
         private void UI_Update(object sender, EventArgs e)
         {
             _data.Text = _multiCommandResult;
             _dataGrid.ItemsSource = _commands.ToArray();
+            //_mainWindow.Title = "MainWindow {0}".FormatEx(_runningIndicatorArray[_runningIndicatorIndex]);
+            bool chumma;
+            _mainWindow.Title = "MainWindow {0}".FormatEx(_runningIndicatorArray[_testData.Update(out chumma).Object.Index]);
         }
 
         private void Window_Closed(object sender, EventArgs e)
@@ -63,7 +80,7 @@ namespace WpfApp1
         private string RunCommand(ICommandParams cmdParams, int i)
         {
             for (long j = 0; j < 2000; ++j)
-                for (long k = 0; k < 200000; ++k) { }
+                for (long k = 0; k < 500000; ++k) { }
             _multiCommandResult =  "MultiCommand: Index ={0}".FormatEx(i);
             System.Diagnostics.Trace.WriteLine(_multiCommandResult);
 

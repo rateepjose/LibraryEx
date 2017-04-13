@@ -15,7 +15,7 @@ namespace LibraryEx
 
         public ActiveObjectPart(string partName, TimeSpan? waitTime = null)
         {
-            WorkQueue = new CmdQueue() { WaitTime = waitTime ?? TimeSpan.FromMilliseconds(50) };
+            WorkQueue = new CmdQueue() { WaitTime = waitTime ?? TimeSpan.FromMilliseconds(100) };
             _initialized = false;
             _name = partName;
         }
