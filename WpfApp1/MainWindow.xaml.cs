@@ -14,6 +14,7 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 using System.Windows.Threading;
+using System.ComponentModel;
 
 namespace WpfApp1
 {
@@ -24,15 +25,19 @@ namespace WpfApp1
     {
         ActiveObjectPart _aop;
         DispatcherTimer _dt;
+        public System.Windows.Input.ICommand TestWpfCmd { get; set; } = new TestWpfCommand();
         public MainWindow()
         {
             InitializeComponent();
+            DataContext = this;
             _testData = new RefObjectObserver<Data>(_test);
-            _aop = new ActiveObjectPart("test", TimeSpan.FromMilliseconds(1)) { ServiceFunc = RunningIndicatorFunc, };
+            _aop = new ActiveObjectPart("test", TimeSpan.FromMilliseconds(100)) { ServiceFunc = RunningIndicatorFunc, };
             string ec = _aop.Initialize();
-            _dt = new DispatcherTimer() { Interval = TimeSpan.FromMilliseconds(2) };
+            _dt = new DispatcherTimer() { Interval = TimeSpan.FromMilliseconds(333) };
             _dt.Tick += UI_Update;
             _dt.Start();
+            int worker, completion;
+            System.Threading.ThreadPool.GetMaxThreads(out worker, out completion);
         }
 
         private char[] _runningIndicatorArray = { '|', '/', '-', '\\', };
@@ -98,5 +103,39 @@ namespace WpfApp1
             _commands.Add(_aop.CreateCommand("MULTICOMMAND", (x) => RunCommand(x, i)).Start());
             System.Diagnostics.Trace.WriteLine("Test_Click{0}".FormatEx(i));
         }
+
+    }
+
+    public class TestWpfCommand : System.Windows.Input.ICommand, INotifyPropertyChanged
+    {
+        public event EventHandler CanExecuteChanged;
+        public event PropertyChangedEventHandler PropertyChanged;
+
+        //{
+        //    add { CommandManager.RequerySuggested += value; }
+        //    remove { CommandManager.RequerySuggested -= value; }
+        //}
+
+        public bool CanExecute(object parameter) => CannotExecuteReason.IsNullOrEmpty();//_flag;
+        ////private bool _flag = true;
+        public async void Execute(object parameter)
+        {
+            CannotExecuteReason = "Executing";////_flag = false;
+            //CommandManager.InvalidateRequerySuggested();
+            CanExecuteChanged?.Invoke(this, EventArgs.Empty);
+            System.Diagnostics.Trace.WriteLine("Enter{0}".FormatEx(System.Threading.Thread.CurrentThread.ManagedThreadId));
+            await Task.Delay(5000);
+            System.Diagnostics.Trace.WriteLine("Exit{0}".FormatEx(System.Threading.Thread.CurrentThread.ManagedThreadId));
+            CannotExecuteReason = string.Empty;////_flag = true;
+            CanExecuteChanged?.Invoke(this, new EventArgs());
+            //CommandManager.InvalidateRequerySuggested();
+        }
+        private string _cannotExecuteReason = string.Empty;
+        public string CannotExecuteReason { get => _cannotExecuteReason; private set { if (value != _cannotExecuteReason) { _cannotExecuteReason = value; NotifyPropertyChanged(); ToolTipEnabled = !_cannotExecuteReason.IsNullOrEmpty(); ; } } }
+
+        private void NotifyPropertyChanged([System.Runtime.CompilerServices.CallerMemberName] string name = "") => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
+
+        private bool _toolTipEnabled = false;
+        public bool ToolTipEnabled { get => _toolTipEnabled; set { if (value != _toolTipEnabled) { _toolTipEnabled = value; NotifyPropertyChanged(); } } }
     }
 }

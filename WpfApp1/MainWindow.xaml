@@ -24,5 +24,7 @@
             <TextBlock Height="23" Text="Empty" x:Name="_dataInit" Grid.Column="3"/>
         </Grid>
         <DataGrid Grid.Row="1" x:Name="_dataGrid"/>
+        <Button Content="Text" Margin="0,30,0.4,261.4" Grid.RowSpan="2" Command="{Binding Path=TestWpfCmd}" ToolTipService.ShowOnDisabled="True" ToolTip="{Binding Path=TestWpfCmd.CannotExecuteReason}" ToolTipService.IsEnabled="{Binding Path=TestWpfCmd.ToolTipEnabled}"/>
+
     </Grid>
 </Window>
