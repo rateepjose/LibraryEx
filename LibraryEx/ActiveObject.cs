@@ -51,11 +51,7 @@ namespace LibraryEx
             }
         }
 
-        private void RunOneQueuedCommand()
-        {
-            ICommand cmd;
-            if (WorkQueue.Pull(out cmd).IsNullOrEmpty()) { cmd.RunCmdFunc(); }
-        }
+        private void RunOneQueuedCommand() { if (WorkQueue.Pull(out var cmd).IsNullOrEmpty()) { cmd.RunCmdFunc(); } }
 
         protected virtual void OnService() { }
 
