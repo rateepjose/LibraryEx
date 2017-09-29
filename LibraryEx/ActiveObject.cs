@@ -275,7 +275,7 @@ namespace LibraryEx
         public ICommandStatus Push(ICommand command) { lock (_queue) { _queue.Enqueue(command); if (1 == _queue.Count) { Monitor.Pulse(_queue); } } return command; }
     }
 
-    public static class Extensions
+    public static partial class Extensions
     {
         public static bool IsNullOrEmpty(this string str) { return string.IsNullOrEmpty(str); }
         public static string FormatEx(this string str, params object[] args) { return string.Format(str, args); }
