@@ -19,7 +19,6 @@ namespace LibraryEx
     public interface IRefObjectObeserverViewOfPublisher<Obj>
         where Obj : class
     {
-        uint SequenceNum { get; }
         SequencedPair<Obj> Pair { get; }
     }
     public interface IRefObjectPublisher<Obj> : IRefObjectObeserverViewOfPublisher<Obj>
@@ -31,7 +30,6 @@ namespace LibraryEx
         where Obj : class
     {
         private volatile SequencedPair<Obj> _pair;
-        public uint SequenceNum => _pair.SequenceNumber;
         public SequencedPair<Obj> Pair => _pair;
         public Obj Object { get => Pair.RefObject; set => _pair = new SequencedPair<Obj>(null == _pair ? 0 : _pair.SequenceNumber + 1, value); }
     }
@@ -49,7 +47,7 @@ namespace LibraryEx
         where Obj : class
     {
         private SequencedPair<Obj> _cachedPair;
-        public bool IsUpdateRequired => _cachedPair.SequenceNumber != _publisher.SequenceNum;
+        public bool IsUpdateRequired => _cachedPair.SequenceNumber != _publisher.Pair.SequenceNumber;
         public Obj Object => _cachedPair.RefObject;
         public bool Update()
         {
