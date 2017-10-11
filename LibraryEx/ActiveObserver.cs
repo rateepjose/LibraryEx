@@ -8,7 +8,7 @@ namespace LibraryEx
 {
 
     public class SequencedPair<Obj>
-        where Obj : class
+        //where Obj : class
     {
         public uint SequenceNumber { get; private set; }
         public Obj RefObject { get; private set; }
@@ -17,34 +17,43 @@ namespace LibraryEx
     }
 
     public interface IRefObjectObeserverViewOfPublisher<Obj>
-        where Obj : class
+        //where Obj : class
     {
         SequencedPair<Obj> Pair { get; }
     }
     public interface IRefObjectPublisher<Obj> : IRefObjectObeserverViewOfPublisher<Obj>
-        where Obj : class
+        //where Obj : class
     {
         Obj Object { get; }
     }
     public class RefObjectPublisher<Obj> : IRefObjectPublisher<Obj>
-        where Obj : class
+        //where Obj : class
     {
         private volatile SequencedPair<Obj> _pair;
         public SequencedPair<Obj> Pair => _pair;
         public Obj Object { get => Pair.RefObject; set => _pair = new SequencedPair<Obj>(null == _pair ? 0 : _pair.SequenceNumber + 1, value); }
     }
 
-
-    public interface IRefObjectObserver<Obj>
-        where Obj : class
+    public interface IRefObjectObserver
     {
+        Type ObjectType { get; }
         bool IsUpdateRequired { get; }
         bool Update();
+    }
+
+    public static partial class Extensions
+    {
+        public static Obj GetObj<Obj>(this IRefObjectObserver refObjObserver) => (refObjObserver as IRefObjectObserver<Obj>).Object;
+    }
+
+    public interface IRefObjectObserver<Obj> : IRefObjectObserver
+        //where Obj : class
+    {
         Obj Object { get; }
     }
 
     public class RefObjectObserver<Obj> : IRefObjectObserver<Obj>
-        where Obj : class
+        //where Obj : class
     {
         private SequencedPair<Obj> _cachedPair;
         public bool IsUpdateRequired => _cachedPair.SequenceNumber != _publisher.Pair.SequenceNumber;
@@ -55,6 +64,8 @@ namespace LibraryEx
             _cachedPair = _publisher.Pair;
             return updated;
         }
+
+        public Type ObjectType => typeof(Obj);
 
         public RefObjectObserver<Obj> Update(out bool updated) { updated = Update(); return this; }
 

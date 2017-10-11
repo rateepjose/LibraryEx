@@ -59,8 +59,7 @@ namespace WpfApp1
             _data.Text = _multiCommandResult;
             _dataGrid.ItemsSource = _commands.ToArray();
             //_mainWindow.Title = "MainWindow {0}".FormatEx(_runningIndicatorArray[_runningIndicatorIndex]);
-            bool chumma;
-            _mainWindow.Title = "MainWindow {0}".FormatEx(_runningIndicatorArray[_testData.Update(out chumma).Object.Index]);
+            _mainWindow.Title = "MainWindow {0}".FormatEx(_runningIndicatorArray[_testData.Update(out bool chumma).Object.Index]);
         }
 
         private void Window_Closed(object sender, EventArgs e)
@@ -103,7 +102,6 @@ namespace WpfApp1
             _commands.Add(_aop.CreateCommand("MULTICOMMAND", (x) => RunCommand(x, i)).Start());
             System.Diagnostics.Trace.WriteLine("Test_Click{0}".FormatEx(i));
         }
-
     }
 
     public class TestWpfCommand : System.Windows.Input.ICommand, INotifyPropertyChanged
