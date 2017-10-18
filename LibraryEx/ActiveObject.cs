@@ -9,9 +9,7 @@ namespace LibraryEx
         private Thread _activeObjectThread;
         private bool _initialized;
         public IWorkQueue WorkQueue { get; private set; }
-
-        private string _name = string.Empty;
-        public string Name => _name;
+        public string Name { get; private set; }
 
         #region Constructor and Destructors
 
@@ -19,7 +17,7 @@ namespace LibraryEx
         {
             WorkQueue = new CmdQueue() { WaitTime = waitTime ?? TimeSpan.FromMilliseconds(100) };
             _initialized = false;
-            _name = partName;
+            Name = partName;
         }
 
         ~ActiveObjectPart() { Dispose(false); }
@@ -70,7 +68,7 @@ namespace LibraryEx
             string ec = string.Empty;
             try
             {
-                if (_initialized) { ec = "The part=['{0}'] is already initialized".FormatEx(_name); return ec; }
+                if (_initialized) { ec = "The part=['{0}'] is already initialized".FormatEx(Name); return ec; }
 
                 _activeObjectThread = new Thread(() => AOThread()) { IsBackground = true, };
                 _runThread = true;
