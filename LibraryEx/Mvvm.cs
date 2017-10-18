@@ -26,18 +26,25 @@ namespace LibraryEx
         bool UpdateModel();
     }
 
+    public interface IModelObserverForVM
+    {
+        ICommandProxy CreateBindingObjects(Dictionary<string, IRefObjectObserver> models);
+        ICommandProxy GetChangedItemList();
+    }
+
     #region ViewModel classes
     /// <summary>
     /// This class is used to help the UI thread in passing ONLY the objects that need to be updated.
     /// </summary>
-    public class ModelObserverForVM
+    public class ModelObserverForVM : IModelObserverForVM
     {
         private ActiveObjectPart _aop;
-        private Dictionary<string, IModelObserver> _bindingObjects = new Dictionary<string, IModelObserver>();
+        private KeyValuePair<string, IModelObserver>[] _bindingObjects = new KeyValuePair<string, IModelObserver>[0];
         private HashSet<string> _changedItems = new HashSet<string>();
 
         #region Datatypes
 
+        public class BindingObjectCollection : IOutputParams { public Dictionary<string, IBindingObject> Collection { get; set; } }
         public class ChangedItemsParams : IOutputParams { public string[] ChangedItems { get; set; } }
 
         #endregion
@@ -47,6 +54,7 @@ namespace LibraryEx
         public ModelObserverForVM()
         {
             _aop = new ActiveObjectPart("ModelObserverForUi") { ServiceFunc = Poll };
+            _aop.Initialize();
         }
 
         #endregion
@@ -61,10 +69,11 @@ namespace LibraryEx
             }
         }
 
-        public ICommandProxy CreateBindingObjects(Dictionary<string, IRefObjectObserver> models) => _aop.CreateCommand("CreateBindingObjects", _ => PerformCreateBindingObjects(models));
-        private string PerformCreateBindingObjects(Dictionary<string, IRefObjectObserver> models)
+        public ICommandProxy CreateBindingObjects(Dictionary<string, IRefObjectObserver> models) => _aop.CreateCommand("CreateBindingObjects", x => PerformCreateBindingObjects(x, models));
+        private string PerformCreateBindingObjects(ICommandParams cmdParams, Dictionary<string, IRefObjectObserver> models)
         {
-            _bindingObjects = models.ToDictionary(x => x.Key, y => BindingObjectFactory.CreateModelObserver(y.Value));
+            _bindingObjects = models.Select(x => new KeyValuePair<string, IModelObserver>(x.Key, BindingObjectFactory.CreateModelObserver(x.Value))).ToArray();
+            cmdParams.SetOutputParams(new BindingObjectCollection() { Collection = _bindingObjects.ToDictionary(x => x.Key, y => y.Value as IBindingObject) });
             return string.Empty;
         }
 
@@ -84,7 +93,8 @@ namespace LibraryEx
         /// <summary>
         /// Class used by two classes namely:
         /// 1. VM(ModelObserverForVM to apply data update from Model)
-        /// 2. View(xaml to display changes reported by VM)
+        /// 2. View(UIThread to update the NotifyPropertyChanged event for the changes reported by VM).
+        /// Note: The xaml binds to the MO.Object (where Object is recognized in the implementation class of IRefObjectObserver)
         /// </summary>
         private class BindingObject : INotifyPropertyChanged, IBindingObject, IModelObserver
         {
@@ -140,6 +150,6 @@ namespace LibraryEx
                 foreach (var item in items) { Models[item.Key] = item.Value; }
             }
         }
-    } 
+    }
     #endregion
 }

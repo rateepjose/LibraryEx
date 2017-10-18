@@ -6,10 +6,12 @@ namespace LibraryEx
 {
     public class ActiveObjectPart : IDisposable
     {
-        private string _name;
         private Thread _activeObjectThread;
         private bool _initialized;
         public IWorkQueue WorkQueue { get; private set; }
+
+        private string _name = string.Empty;
+        public string Name => _name;
 
         #region Constructor and Destructors
 
