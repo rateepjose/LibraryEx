@@ -107,13 +107,7 @@ namespace LibraryEx
 
             #region IBindingObject
 
-            private bool _uiUpdateRequired = false;
-            public void UpdateUI()
-            {
-                if (!_uiUpdateRequired) { return; }
-                OnNotifyPropertyChanged(nameof(MO));
-                _uiUpdateRequired = false;
-            }
+            public void UpdateUI() => OnNotifyPropertyChanged(nameof(MO));
 
             #endregion
 
@@ -121,7 +115,7 @@ namespace LibraryEx
 
             public IRefObjectObserver MO { get; set; }
             public bool IsModelUpdated => MO.IsUpdateRequired;
-            public bool UpdateModel() => _uiUpdateRequired = MO.Update();
+            public bool UpdateModel() => MO.Update();
 
             #endregion
         }
