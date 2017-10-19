@@ -34,7 +34,7 @@ namespace WpfApp2
             //Create ViewModel Observer
             _modelObserverForVM = new ModelObserverForVM();
             //Create ViewHelper that binds to VM and View. Default the view to poll every 333ms
-            _vh = new ViewHelper(this) { ViewModel = _modelObserverForVM, OnUiUpdate = UI_Update }.Initialize(ModelCollection.Models);
+            _vh = new ViewHelper(this) { ViewModel = _modelObserverForVM, OnUiUpdate = UI_Update }.Initialize(ModelObserverCollection.Models);
 
             //Now create the remaining models
             //OnButton_CreateModels(null, null);
@@ -49,7 +49,7 @@ namespace WpfApp2
             //Create Models
             _sampleModel1 = new SampleModel1();
 
-            _vh.Initialize(ModelCollection.Models);
+            _vh.Initialize(ModelObserverCollection.Models);
         }
     }
 
@@ -68,7 +68,7 @@ namespace WpfApp2
         public SampleModel1()
         {
             _aop = new ActiveObjectPart("SampleModel1", TimeSpan.FromMilliseconds(100)) { ServiceFunc = Poll };
-            ModelCollection.AddModelObserverToCollection(new Dictionary<string, IRefObjectObserver>() { { $"{_aop.Name}.Data", new RefObjectObserver<CoordinateData>(Data) } });
+            ModelObserverCollection.AddModelObserverToCollection(new Dictionary<string, IRefObjectObserver>() { { $"{_aop.Name}.Data", new RefObjectObserver<CoordinateData>(Data) } });
             _aop.Initialize();
         }
 
@@ -87,7 +87,7 @@ namespace WpfApp2
         public SampleModel2()
         {
             _aop = new ActiveObjectPart("SampleModel2") { ServiceFunc = Poll };
-            ModelCollection.AddModelObserverToCollection(new Dictionary<string, IRefObjectObserver>() { { $"{_aop.Name}.Data", new RefObjectObserver<string>(_data) } });
+            ModelObserverCollection.AddModelObserverToCollection(new Dictionary<string, IRefObjectObserver>() { { $"{_aop.Name}.Data", new RefObjectObserver<string>(_data) } });
             _aop.Initialize();
         }
 

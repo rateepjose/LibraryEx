@@ -133,7 +133,7 @@ namespace LibraryEx
     /// Assumes the 'AddModelObserverToCollection' will be done at startup ONLY(by the model classes) followed by call to 'Models' property by the VM to get the whole collection.
     /// Calls to this class for 'Models' and 'AddModelObserverToCollection' is NOT INTENDED to be invoked in PARALLEL. 
     /// </summary>
-    public static class ModelCollection
+    public static class ModelObserverCollection
     {
         private static object _lockObj = new object();
         public static Dictionary<string, IRefObjectObserver> Models { get; private set; } = new Dictionary<string, IRefObjectObserver>();

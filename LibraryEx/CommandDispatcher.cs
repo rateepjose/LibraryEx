@@ -69,32 +69,31 @@ namespace LibraryEx
             return string.Empty;
         }
 
-        private void SetReservationsTo(string cmd, string[] reservations)
+        private void SetReservationsTo(string reservationReason, string[] reservations)
         {
             if (reservations == null) return;
-            foreach (var reservation in reservations) { _reservationAndReasonMap[reservation] = cmd; }
+            foreach (var reservation in reservations) { _reservationAndReasonMap[reservation] = reservationReason; }
         }
 
         private Dictionary<string, ICommandStatus> _runningCommands = new Dictionary<string, ICommandStatus>();
         public ICommandProxy DispatchCommand(string name, string command, Dictionary<string, string> parameters) => _aop.CreateCommand("DispatchCommand", x => PerformDispatchCommand(name, command, parameters, x));
         private string PerformDispatchCommand(string name, string command, Dictionary<string, string> parameters, ICommandParams commandParams)
         {
+            string nameCommandKey = $"{name}.{command}";
             //Check if the command is already in the runningCommands list
-            if (!_runningCommands.ContainsKey(command)) return $"Command '{command}' is currently running";
+            if (!_runningCommands.ContainsKey(nameCommandKey)) return $"Command '{command}' registered by {name} is currently running";
 
             //lookup for the command
-            if (!_commandAndReservationTable.TryGetValue($"{name}.{command}", out var resTable)) { return $"Command '{command}' not found in '{name}'"; }
+            if (!_commandAndReservationTable.TryGetValue(nameCommandKey, out var resTable)) { return $"Command '{command}' not found in '{name}'"; }
 
             //Check if reservations for the given command are free
             if (!resTable.reservations.All((x) => _reservationAndReasonMap[x].IsNullOrEmpty())) return $"Command '{command}' cannot be executed since some resources are reserved.(Reserved items:'{string.Join(",", resTable.reservations.Where(x => !_reservationAndReasonMap[x].IsNullOrEmpty()).Select(y => $"[{y}={_reservationAndReasonMap[y]}]").ToArray())}')";
 
             //Set all the reservations for the given command to busy
-            //foreach (var reservation in resTable.reservations) { _reservationAndReasonMap[reservation] = command; }
-            SetReservationsTo(command, resTable.reservations);
+            SetReservationsTo(nameCommandKey, resTable.reservations);
 
             //Add the command to runningCommands
-            _runningCommands[command] = resTable.client.StartCommand(command, parameters).Start();
-            commandParams.SetOutputParams(new DispatcherOutputParams() { CommandStatus = _runningCommands[command] });
+            commandParams.SetOutputParams(new DispatcherOutputParams() { CommandStatus = _runningCommands[nameCommandKey] = resTable.client.StartCommand(command, parameters).Start() });
             return string.Empty;
         }
     }
