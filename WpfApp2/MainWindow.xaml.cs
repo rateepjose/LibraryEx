@@ -13,6 +13,7 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 using LibraryEx;
+using static LibraryEx.CommandDispatchManager;
 
 namespace WpfApp2
 {
@@ -54,8 +55,24 @@ namespace WpfApp2
     }
 
     #region Models
-    public class SampleModel1
+    public class SampleModel1 : ICommandDispatchClient
     {
+        #region ICommandDispatchClient
+
+        public string Name => _aop.Name;
+        public Dictionary<string, string[]> CommandReservationTable => throw new NotImplementedException();
+        public ICommandProxy StartCommand(string command, Dictionary<string, string> parameters) => _aop.CreateCommand("StartCommand", _ => PerformStartCommand(command, parameters));
+        private string PerformStartCommand(string command, Dictionary<string, string> parameters)
+        {
+            switch (command)
+            {
+                case "Reset": i = 0; break;
+                default: break;
+            }
+            return string.Empty;
+        }
+        #endregion
+
         public class CoordinateData
         {
             public int X { get; set; }
@@ -65,6 +82,7 @@ namespace WpfApp2
         private ActiveObjectPart _aop;
         private RefObjectPublisher<CoordinateData> _data = new RefObjectPublisher<CoordinateData>() { Object = new CoordinateData { X = 0, Y = 0 } };
         public IRefObjectPublisher<CoordinateData> Data => _data;
+
         public SampleModel1()
         {
             _aop = new ActiveObjectPart("SampleModel1", TimeSpan.FromMilliseconds(100)) { ServiceFunc = Poll };
@@ -99,6 +117,6 @@ namespace WpfApp2
             if (_statusIndex >= _status.Length) { _statusIndex = 0; }
             _data.Object = $"TestApp#Time:{DateTime.Now}#RunningStatus:{_status[_statusIndex]}";
         }
-    } 
+    }
     #endregion
 }

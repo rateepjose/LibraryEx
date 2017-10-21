@@ -7,11 +7,11 @@
         mc:Ignorable="d"
         Title="{Binding Path=[SampleModel2.Data].MO.Object}" Height="350" Width="525">
     <Grid>
-        <StackPanel Orientation="Vertical">
+        <VirtualizingStackPanel Orientation="Vertical">
             <TextBlock Text="{Binding Path=[SampleModel2.Data].MO.Object}"/>
             <TextBlock Text="{Binding Path=[SampleModel1.Data].MO.Object.X}"/>
             <TextBlock Text="{Binding Path=[SampleModel1.Data].MO.Object.Y}"/>
             <Button Content="CreateModels" Click="OnButton_CreateModels"/>
-        </StackPanel>
+        </VirtualizingStackPanel>
     </Grid>
 </Window>

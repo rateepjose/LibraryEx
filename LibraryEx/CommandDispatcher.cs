@@ -29,7 +29,7 @@ namespace LibraryEx
         #endregion
 
         private ActiveObjectPart _aop;
-        public ICommandDispatchClient[] Clients { get; private set; }
+        public ICommandDispatchClient[] Clients { get; private set; } = new ICommandDispatchClient[0];
 
         #region Constructor and Destructor
 
@@ -37,6 +37,7 @@ namespace LibraryEx
         {
             Clients = clients ?? new ICommandDispatchClient[0];
             _aop = new ActiveObjectPart("CommandDispatchManager") { ServiceFunc = Poll };
+            _aop.Initialize();
         }
 
         #endregion
