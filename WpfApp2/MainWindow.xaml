@@ -12,6 +12,8 @@
             <TextBlock Text="{Binding Path=[SampleModel1.Data].MO.Object.X}"/>
             <TextBlock Text="{Binding Path=[SampleModel1.Data].MO.Object.Y}"/>
             <Button Content="CreateModels" Click="OnButton_CreateModels"/>
+            <Button Content="DoSomethingOnSample1Controller" Command="{Binding Path=Command}"/>
+            <TextBlock Text="{Binding Path=[SampleModel1.Reset].MO.Object}"/>
         </VirtualizingStackPanel>
     </Grid>
 </Window>

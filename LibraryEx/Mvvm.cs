@@ -123,6 +123,8 @@ namespace LibraryEx
         #endregion
 
         public static IModelObserver CreateModelObserver(IRefObjectObserver modelData) => new BindingObject() { MO = modelData };
+
+        public static IBindingObject DefaultBindingObject { get; private set; } = new BindingObject() { MO = new RefObjectObserver<object>(new RefObjectPublisher<object>() { Object = new object() }) };
     }
     #endregion
 

@@ -26,6 +26,7 @@ namespace WpfApp2
         ModelObserverForVM _modelObserverForVM;
         SampleModel1 _sampleModel1;
         SampleModel2 _sampleModel2;
+        CommandDispatchManager _cdm;
         public MainWindow()
         {
             InitializeComponent();
@@ -38,7 +39,7 @@ namespace WpfApp2
             _vh = new ViewHelper(this) { ViewModel = _modelObserverForVM, OnUiUpdate = UI_Update }.Initialize(ModelObserverCollection.Models);
 
             //Now create the remaining models
-            //OnButton_CreateModels(null, null);
+
         }
 
         private void UI_Update()
@@ -47,8 +48,14 @@ namespace WpfApp2
 
         private void OnButton_CreateModels(object sender, RoutedEventArgs e)
         {
-            //Create Models
+            //Create remaining Models
             _sampleModel1 = new SampleModel1();
+
+
+            _cdm = new CommandDispatchManager(new ICommandDispatchClient[] { _sampleModel1 });
+            _cdm.HarvestCommands().Run();
+            _vh.Command = new TestCommand(_cdm);
+
 
             _vh.Initialize(ModelObserverCollection.Models);
         }
@@ -60,13 +67,13 @@ namespace WpfApp2
         #region ICommandDispatchClient
 
         public string Name => _aop.Name;
-        public Dictionary<string, string[]> CommandReservationTable => throw new NotImplementedException();
+        public Dictionary<string, string[]> CommandReservationTable { get; private set; }
         public ICommandProxy StartCommand(string command, Dictionary<string, string> parameters) => _aop.CreateCommand("StartCommand", _ => PerformStartCommand(command, parameters));
         private string PerformStartCommand(string command, Dictionary<string, string> parameters)
         {
             switch (command)
             {
-                case "Reset": i = 0; break;
+                case "Reset": i = 0; System.Threading.Thread.Sleep(1000); break;
                 default: break;
             }
             return string.Empty;
@@ -87,6 +94,7 @@ namespace WpfApp2
         {
             _aop = new ActiveObjectPart("SampleModel1", TimeSpan.FromMilliseconds(100)) { ServiceFunc = Poll };
             ModelObserverCollection.AddModelObserverToCollection(new Dictionary<string, IRefObjectObserver>() { { $"{_aop.Name}.Data", new RefObjectObserver<CoordinateData>(Data) } });
+            CommandReservationTable = new Dictionary<string, string[]>() { { "Reset", new string[] { $"{Name}", } } };
             _aop.Initialize();
         }
 
@@ -119,4 +127,22 @@ namespace WpfApp2
         }
     }
     #endregion
+
+    public class TestCommand : System.Windows.Input.ICommand
+    {
+        public CommandDispatchManager Cdm { get; private set; }
+        public event EventHandler CanExecuteChanged;
+
+        public bool CanExecute(object parameter) => true;
+
+        public void Execute(object parameter)
+        {
+            Cdm.DispatchCommand("SampleModel1", "Reset", new Dictionary<string, string>()).Start();
+        }
+
+        public TestCommand(CommandDispatchManager cdm)
+        {
+            Cdm = cdm;
+        }
+    }
 }

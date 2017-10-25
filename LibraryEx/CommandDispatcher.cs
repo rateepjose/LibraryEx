@@ -102,7 +102,7 @@ namespace LibraryEx
         {
             string fullNameCommand = $"{name}.{command}";
             //Check if the command is already in the runningCommands list
-            if (!_runningCommands.ContainsKey(fullNameCommand)) return $"Command '{command}' registered by {name} is currently running";
+            if (_runningCommands.ContainsKey(fullNameCommand)) return $"Command '{command}' registered by {name} is currently running";
 
             //lookup for the command
             if (!_commandToReservationsMap.TryGetValue(fullNameCommand, out var resTable)) { return $"Command '{command}' not found in '{name}'"; }
@@ -134,7 +134,7 @@ namespace LibraryEx
                 int itemIndex = 1;
                 foreach (string cmdReservation in cmdReservations)
                 {
-                    if (!cmdReservation.IsNullOrEmpty()) { disableReason.Append($"{itemIndex++}. {cmdReservation}\n"); }
+                    if (!_reservationToReasonMap[cmdReservation].IsNullOrEmpty()) { disableReason.Append($"{itemIndex++}. {_reservationToReasonMap[cmdReservation]}\n"); }
                 }
                 _commandToDisableReasonMap[command].Object = disableReason.ToString().TrimEnd(new char[] { '\n' });
             }

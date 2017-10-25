@@ -30,6 +30,16 @@ namespace LibraryEx
             return this;
         }
 
+        public IBindingObject this[string key]
+        {
+            get
+            {
+                IBindingObject data = null;
+                try { data = _bindingObjects[key]; } catch { }
+                return data ?? BindingObjectFactory.DefaultBindingObject;
+            }
+        }
+
         private bool _initialized = false;
         private bool CheckIfFullyInitialized()
         {
@@ -37,7 +47,8 @@ namespace LibraryEx
             if (_icsCreateBindingObjects == null) return false;
             if (!_icsCreateBindingObjects.IsComplete) return false;
             _bindingObjects = (_icsCreateBindingObjects.OutputParams as ModelObserverForVM.BindingObjectCollection).Collection;
-            _windowMain.DataContext = _bindingObjects;
+            _windowMain.DataContext = null;//Added to since we are binding to the same object and DataContext populates only on change of object
+            _windowMain.DataContext = this;
             _initialized = true;
             return true;
         }
@@ -59,5 +70,7 @@ namespace LibraryEx
         {
             foreach (var item in changedItems) { _bindingObjects[item].UpdateUI(); }
         }
+
+        public System.Windows.Input.ICommand Command { get; set; }
     }
 }
