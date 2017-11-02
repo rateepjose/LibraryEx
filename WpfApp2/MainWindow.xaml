@@ -4,6 +4,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:WpfApp2"
+        xmlns:ex="clr-namespace:LibraryEx;assembly=WpfLibraryEx"
         mc:Ignorable="d"
         Title="{Binding Path=[SampleModel2.Data].MO.Object}" Height="350" Width="525">
     <Grid>
@@ -12,7 +13,7 @@
             <TextBlock Text="{Binding Path=[SampleModel1.Data].MO.Object.X}"/>
             <TextBlock Text="{Binding Path=[SampleModel1.Data].MO.Object.Y}"/>
             <Button Content="CreateModels" Click="OnButton_CreateModels"/>
-            <Button Content="DoSomethingOnSample1Controller" Command="{Binding Path=Command}"/>
+            <Button Content="DoSomethingOnSample1Controller" Command="{Binding Path=Command}" ex:CtrlExtn.ModuleName="SampleModel1" ex:CtrlExtn.CommandName="Reset"/>
             <TextBlock Text="{Binding Path=[SampleModel1.Reset].MO.Object}"/>
         </VirtualizingStackPanel>
     </Grid>

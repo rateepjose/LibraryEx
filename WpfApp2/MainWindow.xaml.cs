@@ -36,7 +36,7 @@ namespace WpfApp2
             //Create ViewModel Observer
             _modelObserverForVM = new ModelObserverForVM();
             //Create ViewHelper that binds to VM and View. Default the view to poll every 333ms
-            _vh = new ViewHelper(this) { ViewModel = _modelObserverForVM, OnUiUpdate = UI_Update }.Initialize(ModelObserverCollection.Models);
+            _vh = new ViewHelper(this, TimeSpan.FromMilliseconds(250)) { ViewModel = _modelObserverForVM, OnUiUpdate = UI_Update }.Initialize(ModelObserverCollection.Models);
 
             //Now create the remaining models
 
@@ -73,7 +73,7 @@ namespace WpfApp2
         {
             switch (command)
             {
-                case "Reset": i = 0; System.Threading.Thread.Sleep(1000); break;
+                case "Reset": i = 0; Poll(); System.Threading.Thread.Sleep(1000); break;
                 default: break;
             }
             return string.Empty;
@@ -137,7 +137,9 @@ namespace WpfApp2
 
         public void Execute(object parameter)
         {
-            Cdm.DispatchCommand("SampleModel1", "Reset", new Dictionary<string, string>()).Start();
+            var x = parameter as Dictionary<string, object>;
+            var p = x[CtrlExtn.Parameters] as Dictionary<string, object>;
+            Cdm.DispatchCommand(x[CtrlExtn.ModuleName] as string, x[CtrlExtn.CommandName] as string, new Dictionary<string, string>()).Start();
         }
 
         public TestCommand(CommandDispatchManager cdm)
