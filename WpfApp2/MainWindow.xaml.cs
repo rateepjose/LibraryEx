@@ -29,7 +29,8 @@ namespace WpfApp2
         CommandDispatchManager _cdm;
         public MainWindow()
         {
-            InitializeComponent();
+            Logger.RegisterClient(new WindowsTraceClient());
+            Logger.Info.WriteLine("Logger is created!");
             //Create first a basic model for startup(optional step)
             _sampleModel2 = new SampleModel2();
 
@@ -48,6 +49,7 @@ namespace WpfApp2
 
         private void OnButton_CreateModels(object sender, RoutedEventArgs e)
         {
+            Logger.Debug.WriteLine("OnButton_CreateModels Enter");
             //Create remaining Models
             _sampleModel1 = new SampleModel1();
 
@@ -56,8 +58,10 @@ namespace WpfApp2
             _cdm.HarvestCommands().Run();
             _vh.Command = new TestCommand(_cdm);
 
+            //for (int i = 0; i < 1000; ++i) Logger.Info.WriteLine($"{i}");
 
             _vh.Initialize(ModelObserverCollection.Models);
+            Logger.Debug.WriteLine("OnButton_CreateModels Exit");
         }
     }
 
