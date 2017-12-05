@@ -95,7 +95,7 @@ namespace LibraryEx
             return string.Empty;
         }
 
-        public ICommandProxy CreateCommand(string cmdName, Func<ICommandParams, string> func) => new Command(cmdName, func, WorkQueue);
+        public ICommandProxy CreateCommand(string cmdName, Func<ICommandInteraction, string> func) => new Command(cmdName, func, WorkQueue);
 
 
         #region Command class
@@ -121,6 +121,10 @@ namespace LibraryEx
 
             private IOutputParams _outputParams;
             public IOutputParams OutputParams => _outputParams;
+
+            private bool _isAbortRequested = false;
+            public void Abort() => _isAbortRequested = true;
+            public bool IsAborted => _cmdExecutionStatus == CommandExecutionStatus.Aborted;
             #endregion
 
             #region ICommandProxy
@@ -130,9 +134,13 @@ namespace LibraryEx
 
             private ICommandStatus PackAndEnqueue()
             {
+                //Reset the abort flag(required for cases where the same proxy is reused)
+                _isAbortRequested = false;
+
                 CommandExecutionStatus ces = _cmdExecutionStatus;
                 if (!(ces == CommandExecutionStatus.Completed
-                    || ces == CommandExecutionStatus.NotQueued)) { return this; }
+                    || ces == CommandExecutionStatus.NotQueued
+                    || ces == CommandExecutionStatus.Aborted)) { return this; }
 
                 _commandCompletedEvent.Reset();
                 _cmdExecutionStatus = CommandExecutionStatus.Queued;
@@ -143,7 +151,7 @@ namespace LibraryEx
             #region ICommandInternal
 
             public string CmdName { get; private set; }
-            public Func<ICommandParams, string> CmdFunc { get; private set; }
+            public Func<ICommandInteraction, string> CmdFunc { get; private set; }
             public void RunCmdFunc()
             {
                 _outputParams = null;
@@ -153,16 +161,24 @@ namespace LibraryEx
                 catch (Exception ex) { _errorCode = ex.Message; }
                 finally
                 {
-                    _cmdExecutionStatus = CommandExecutionStatus.Completed;
+                    _cmdExecutionStatus = _isAbortRequested ? CommandExecutionStatus.Aborted : CommandExecutionStatus.Completed;
                     _commandCompletedEvent.Set();
                 }
+            }
+            public void ForceAbortIfNotYetProcessed()
+            {
+                _outputParams = null;
+                _errorCode = "Aborted when queued";
+                _cmdExecutionStatus = CommandExecutionStatus.Aborted;
+                _commandCompletedEvent.Set();
             }
 
             #endregion
 
-            #region ICommandParams
+            #region ICommandInteraction
 
             public void SetOutputParams(IOutputParams outputParams) => _outputParams = outputParams;
+            public bool IsAbortRequested => _isAbortRequested;
 
             #endregion
 
@@ -191,7 +207,7 @@ namespace LibraryEx
 
             #region Constructor and Destructors
 
-            public Command(string cmdName, Func<ICommandParams, string> func, IWorkQueue queue) { CmdName = cmdName; CmdFunc = func; _queue = queue; }
+            public Command(string cmdName, Func<ICommandInteraction, string> func, IWorkQueue queue) { CmdName = cmdName; CmdFunc = func; _queue = queue; }
 
             #endregion
         }
@@ -205,6 +221,7 @@ namespace LibraryEx
         Queued,
         Processing,
         Completed,
+        Aborted,
     }
 
     public interface ICommandStatus
@@ -215,6 +232,8 @@ namespace LibraryEx
         string ErrorCode { get; }
         string WaitForCompletion();
         IOutputParams OutputParams { get; }
+        void Abort();
+        bool IsAborted { get; }
     }
 
     public interface ICommandProxy
@@ -226,18 +245,20 @@ namespace LibraryEx
     public interface ICommandInternal
     {
         string CmdName { get; }
-        Func<ICommandParams, string> CmdFunc { get; }
+        Func<ICommandInteraction, string> CmdFunc { get; }
         void RunCmdFunc();
+        void ForceAbortIfNotYetProcessed();
     }
 
     public interface IOutputParams { }
 
-    public interface ICommandParams
+    public interface ICommandInteraction
     {
         void SetOutputParams(IOutputParams outputParams);
+        bool IsAbortRequested { get; }
     }
 
-    public interface ICommand : ICommandProxy, ICommandStatus, ICommandInternal, ICommandParams, IDisposable { }
+    public interface ICommand : ICommandProxy, ICommandStatus, ICommandInternal, ICommandInteraction, IDisposable { }
 
 
     public interface IWorkQueue
@@ -249,30 +270,45 @@ namespace LibraryEx
 
     public class CmdQueue : IWorkQueue
     {
-        private Queue<ICommand> _queue;
+        private List<ICommand> _queue;
 
-        public CmdQueue() => _queue = new Queue<ICommand>();
+        private readonly object _lockObj = new object();
+
+        public CmdQueue() => _queue = new List<ICommand>();
 
         public TimeSpan WaitTime { get; set; }
 
-        public bool Empty { get { lock (_queue) { return _queue.Count == 0; } } }
+        public bool Empty { get { lock (_lockObj) { return _queue.Count == 0; } } }
+
+        private void RemoveAbortedCommandsFromQueue()
+        {
+            List<ICommand> queue = new List<ICommand>();
+            foreach (var item in _queue)
+            {
+                if (item.IsAbortRequested) { item.ForceAbortIfNotYetProcessed(); continue; }
+                queue.Add(item);
+            }
+            _queue = queue;
+        }
 
         public string Pull(out ICommand command)
         {
             command = null;
-            lock (_queue)
+            lock (_lockObj)
             {
                 try
                 {
-                    if (0 == _queue.Count) { if (!Monitor.Wait(_queue, WaitTime)) { return "Queue is empty after wait"; } }
-                    command = _queue.Dequeue();
+                    RemoveAbortedCommandsFromQueue();
+                    if (0 == _queue.Count) { if (!Monitor.Wait(_lockObj, WaitTime)) { return "Queue is empty after wait"; } }
+                    command = _queue[0];
+                    _queue.RemoveAt(0);
                 }
                 catch (Exception ex) { return ex.Message; }
             }
             return string.Empty;
         }
 
-        public ICommandStatus Push(ICommand command) { lock (_queue) { _queue.Enqueue(command); if (1 == _queue.Count) { Monitor.Pulse(_queue); } } return command; }
+        public ICommandStatus Push(ICommand command) { lock (_lockObj) { _queue.Add(command); if (1 == _queue.Count) { Monitor.Pulse(_lockObj); } } return command; }
     }
 
     public static partial class Extensions

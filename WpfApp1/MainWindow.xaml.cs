@@ -70,21 +70,22 @@ namespace WpfApp1
 
         private int _index = 0;
         ICommandProxy icp;
+        ICommandStatus ics;
         private void Test_Click(object sender, RoutedEventArgs e)
         {
             int i = ++_index;
             _dataInit.Text = _index.ToString();
-            if (icp == null) { icp = _aop.CreateCommand("MULTICOMMAND", (x) => RunCommand(x, _index)); _commands.Add(icp.Start()); }
-            else { icp.Start(); }
+            if (icp == null) { icp = _aop.CreateCommand("MULTICOMMAND", (x) => RunCommand(x, _index)); ics = icp.Start(); _commands.Add(ics); }
+            else { ics = icp.Start(); }
             //MessageBox.Show(_aop.CreateCommand("Multi", () => RunCommand(_index)).Run());
             System.Diagnostics.Trace.WriteLine("Test_Click{0}".FormatEx(i));
         }
 
         public string _multiCommandResult { get; set; } = "Empty";
-        private string RunCommand(ICommandParams cmdParams, int i)
+        private string RunCommand(ICommandInteraction cmdParams, int i)
         {
             for (long j = 0; j < 2000; ++j)
-                for (long k = 0; k < 500000; ++k) { }
+                for (long k = 0; k < 500000; ++k) { if (cmdParams.IsAbortRequested) { return "Aborted while processing"; } }
             _multiCommandResult =  "MultiCommand: Index ={0}".FormatEx(i);
             System.Diagnostics.Trace.WriteLine(_multiCommandResult);
 
@@ -101,6 +102,21 @@ namespace WpfApp1
             _dataInit.Text = _indexMulti.ToString();
             _commands.Add(_aop.CreateCommand("MULTICOMMAND", (x) => RunCommand(x, i)).Start());
             System.Diagnostics.Trace.WriteLine("Test_Click{0}".FormatEx(i));
+        }
+
+        private void Test_Abort(object sender, RoutedEventArgs e)
+        {
+            //ics.Abort();
+            for (int j = 0; j < 8; ++j)
+            {
+                int i = ++_indexMulti;
+                _dataInit.Text = _indexMulti.ToString();
+                _commands.Add(_aop.CreateCommand("MULTICOMMAND", x => RunCommand(x, i)).Start());
+                System.Diagnostics.Trace.WriteLine("Test_Click{0}".FormatEx(i));
+            }
+            _commands[1].Abort();
+            _commands[4].Abort();
+            _commands[5].Abort();
         }
     }
 

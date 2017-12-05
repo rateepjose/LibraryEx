@@ -15,13 +15,15 @@
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition/>
                 <ColumnDefinition/>
             </Grid.ColumnDefinitions>
             <Button Height="28" Width="60" Content="TestMulti" Click="Test_ClickMulti" Grid.Column="0"/>
             <Button Height="28" Width="60" Content="TestSingle" Click="Test_Click" Grid.Column="1"/>
-            <TextBlock Height="23" Text="Empty" x:Name="_data" Grid.Column="2"/>
-            <TextBlock Height="23" Text="Empty" x:Name="_dataInit" Grid.Column="3"/>
+            <Button Height="28" Width="60" Content="Abort" Click="Test_Abort" Grid.Column="2"/>
+            <TextBlock Height="23" Text="Empty" x:Name="_data" Grid.Column="3"/>
+            <TextBlock Height="23" Text="Empty" x:Name="_dataInit" Grid.Column="4"/>
         </Grid>
         <DataGrid Grid.Row="1" x:Name="_dataGrid"/>
         <Button Content="Text" Margin="0,30,0.4,261.4" Grid.RowSpan="2" Command="{Binding Path=TestWpfCmd}" ToolTipService.ShowOnDisabled="True" ToolTip="{Binding Path=TestWpfCmd.CannotExecuteReason}" ToolTipService.IsEnabled="{Binding Path=TestWpfCmd.ToolTipEnabled}"/>

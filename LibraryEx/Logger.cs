@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace LibraryEx
+namespace LibraryEx.Logging
 {
     [Flags]
     public enum LogType: byte
@@ -72,6 +72,7 @@ namespace LibraryEx
         }
     }
 
+    #region Log Clients
 
     public class WindowsTraceClient : ILogClient
     {
@@ -92,6 +93,8 @@ namespace LibraryEx
             System.Diagnostics.Trace.WriteLine($"{dateTime:yyyy/MM/dd HH:mm:ss} {logType}: {message}");
             return string.Empty;
         }
+
+        #endregion
 
         #endregion
     }

@@ -98,7 +98,7 @@ namespace LibraryEx
 
         private Dictionary<string, ICommandStatus> _runningCommands = new Dictionary<string, ICommandStatus>();
         public ICommandProxy DispatchCommand(string name, string command, Dictionary<string, string> parameters) => _aop.CreateCommand("DispatchCommand", x => PerformDispatchCommand(name, command, parameters, x));
-        private string PerformDispatchCommand(string name, string command, Dictionary<string, string> parameters, ICommandParams commandParams)
+        private string PerformDispatchCommand(string name, string command, Dictionary<string, string> parameters, ICommandInteraction commandParams)
         {
             string fullNameCommand = $"{name}.{command}";
             //Check if the command is already in the runningCommands list
@@ -125,6 +125,7 @@ namespace LibraryEx
         {
             List<string> commands = new List<string>();
             foreach (string reservation in reservations) { commands.AddRange(_reservationToCommandsMap[reservation]); }
+            commands = commands.Distinct().ToList();
 
             StringBuilder disableReason = new StringBuilder(string.Empty);
             foreach (string command in commands)

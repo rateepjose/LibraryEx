@@ -70,7 +70,7 @@ namespace LibraryEx
         }
 
         public ICommandProxy CreateBindingObjects(Dictionary<string, IRefObjectObserver> models) => _aop.CreateCommand("CreateBindingObjects", x => PerformCreateBindingObjects(x, models));
-        private string PerformCreateBindingObjects(ICommandParams cmdParams, Dictionary<string, IRefObjectObserver> models)
+        private string PerformCreateBindingObjects(ICommandInteraction cmdParams, Dictionary<string, IRefObjectObserver> models)
         {
             _bindingObjects = models.Select(x => new KeyValuePair<string, IModelObserver>(x.Key, BindingObjectFactory.CreateModelObserver(x.Value))).ToArray();
             cmdParams.SetOutputParams(new BindingObjectCollection() { Collection = _bindingObjects.ToDictionary(x => x.Key, y => y.Value as IBindingObject) });
@@ -78,7 +78,7 @@ namespace LibraryEx
         }
 
         public ICommandProxy GetChangedItemList() => _aop.CreateCommand("GetChangedItemList", x => PerformGetChangedItemList(x));
-        private string PerformGetChangedItemList(ICommandParams commandParams)
+        private string PerformGetChangedItemList(ICommandInteraction commandParams)
         {
             commandParams.SetOutputParams(new ChangedItemsParams() { ChangedItems = _changedItems.ToArray() });
             _changedItems.Clear();

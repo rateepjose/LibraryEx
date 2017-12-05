@@ -14,6 +14,7 @@ using System.Windows.Navigation;
 using System.Windows.Shapes;
 using LibraryEx;
 using static LibraryEx.CommandDispatchManager;
+using LibraryEx.Logging;
 
 namespace WpfApp2
 {
