@@ -114,7 +114,9 @@ namespace LibraryEx
             private ManualResetEventSlim _commandCompletedEvent = new ManualResetEventSlim();
             public string WaitForCompletion()
             {
-                if (_cmdExecutionStatus == CommandExecutionStatus.Completed) { return ErrorCode; }
+                CommandExecutionStatus ces = _cmdExecutionStatus;
+                if (ces == CommandExecutionStatus.Completed
+                    || ces == CommandExecutionStatus.Aborted) { return ErrorCode; }
                 try { _commandCompletedEvent.Wait(); } catch { }
                 return ErrorCode;
             }
