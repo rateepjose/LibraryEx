@@ -73,8 +73,8 @@ namespace WpfApp2
 
         public string Name => _aop.Name;
         public Dictionary<string, string[]> CommandReservationTable { get; private set; }
-        public ICommandProxy StartCommand(string command, Dictionary<string, string> parameters) => _aop.CreateCommand("StartCommand", _ => PerformStartCommand(command, parameters));
-        private string PerformStartCommand(string command, Dictionary<string, string> parameters)
+        public ICommandProxy StartCommand(string command, Dictionary<string, string> parameters, ICommandToken commandToken) => _aop.CreateCommand("StartCommand", _ => PerformStartCommand(command, parameters, commandToken));
+        private string PerformStartCommand(string command, Dictionary<string, string> parameters, ICommandToken commandToken)
         {
             switch (command)
             {
