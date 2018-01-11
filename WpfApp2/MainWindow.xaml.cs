@@ -13,7 +13,6 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 using LibraryEx;
-using static LibraryEx.CommandDispatchManager;
 using LibraryEx.Logging;
 
 namespace WpfApp2
@@ -25,9 +24,10 @@ namespace WpfApp2
     {
         ViewHelper _vh;
         ModelObserverForVM _modelObserverForVM;
-        SampleModel1 _sampleModel1;
+        ParentSampleModel1 _parentSampleModel1;
         SampleModel2 _sampleModel2;
-        CommandDispatchManager _cdm;
+        SampleModel1 _sampleModel1Local;
+        //ICommandDispatchManager _cdm;
         public MainWindow()
         {
             Logger.RegisterClient(new WindowsTraceClient());
@@ -52,12 +52,12 @@ namespace WpfApp2
         {
             Logger.Debug.WriteLine("OnButton_CreateModels Enter");
             //Create remaining Models
-            _sampleModel1 = new SampleModel1();
+            _parentSampleModel1 = new ParentSampleModel1("ParentSampleModel1");
+            _sampleModel1Local = new SampleModel1("Local");
 
 
-            _cdm = new CommandDispatchManager(new ICommandDispatchClient[] { _sampleModel1 });
-            _cdm.HarvestCommands().Run();
-            _vh.Command = new TestCommand(_cdm);
+            CommandDispatcher.InitializeCommandDispatchManager().Run();
+            _vh.Command = new TestCommand(CommandDispatcher.CmdDispatchMgr);
 
             //for (int i = 0; i < 1000; ++i) Logger.Info.WriteLine($"{i}");
 
@@ -67,6 +67,34 @@ namespace WpfApp2
     }
 
     #region Models
+    public class ParentSampleModel1 : ICommandDispatchClient
+    {
+        private ActiveObjectPart _aop;
+        private SampleModel1 _sampleMdl1;
+
+
+        public ParentSampleModel1(string name)
+        {
+            _aop = new ActiveObjectPart(name) {  };
+            _sampleMdl1 = new SampleModel1($"{Name}.SampleModel1");
+            CommandToReservationsAndSubCommandsTable = new Dictionary<string, (string[] reservations, string[] subCommands)>();
+            CommandDispatcher.AddClient(this);
+            _aop.Initialize();
+        }
+        #region ICommandDispatchClient
+
+        public string Name => _aop.Name;
+
+        public Dictionary<string, (string[] reservations, string[] subCommands)> CommandToReservationsAndSubCommandsTable { get; set; }
+
+        public ICommandProxy StartCommand(string command, Dictionary<string, string> parameters, ICommandToken commandToken)
+        {
+            throw new NotImplementedException();
+        }
+        
+        #endregion
+    }
+
     public class SampleModel1 : ICommandDispatchClient
     {
         #region ICommandDispatchClient
@@ -95,11 +123,12 @@ namespace WpfApp2
         private RefObjectPublisher<CoordinateData> _data = new RefObjectPublisher<CoordinateData>() { Object = new CoordinateData { X = 0, Y = 0 } };
         public IRefObjectPublisher<CoordinateData> Data => _data;
 
-        public SampleModel1()
+        public SampleModel1(string name)
         {
-            _aop = new ActiveObjectPart("SampleModel1", TimeSpan.FromMilliseconds(100)) { ServiceFunc = Poll };
-            ModelObserverCollection.AddModelObserverToCollection(new Dictionary<string, IRefObjectObserver>() { { $"{_aop.Name}.Data", new RefObjectObserver<CoordinateData>(Data) } });
+            _aop = new ActiveObjectPart(name, TimeSpan.FromMilliseconds(100)) { ServiceFunc = Poll };
+            ModelObserverCollection.Add(new Dictionary<string, IRefObjectObserver>() { { $"{_aop.Name}.Data", new RefObjectObserver<CoordinateData>(Data) } });
             CommandToReservationsAndSubCommandsTable = new Dictionary<string, (string[] reservations, string[] subCommands)>() { { "Reset", (new string[] { $"{Name}", }, new string[] { }) }, };
+            CommandDispatcher.AddClient(this);
             _aop.Initialize();
         }
 
@@ -118,7 +147,7 @@ namespace WpfApp2
         public SampleModel2()
         {
             _aop = new ActiveObjectPart("SampleModel2") { ServiceFunc = Poll };
-            ModelObserverCollection.AddModelObserverToCollection(new Dictionary<string, IRefObjectObserver>() { { $"{_aop.Name}.Data", new RefObjectObserver<string>(_data) } });
+            ModelObserverCollection.Add(new Dictionary<string, IRefObjectObserver>() { { $"{_aop.Name}.Data", new RefObjectObserver<string>(_data) } });
             _aop.Initialize();
         }
 
@@ -135,7 +164,7 @@ namespace WpfApp2
 
     public class TestCommand : System.Windows.Input.ICommand
     {
-        public CommandDispatchManager Cdm { get; private set; }
+        public ICommandDispatchManager Cdm { get; private set; }
         public event EventHandler CanExecuteChanged;
 
         public bool CanExecute(object parameter) => true;
@@ -147,7 +176,7 @@ namespace WpfApp2
             Cdm.DispatchCommand(x[CtrlExtn.ModuleName] as string, x[CtrlExtn.CommandName] as string, new Dictionary<string, string>()).Start();
         }
 
-        public TestCommand(CommandDispatchManager cdm)
+        public TestCommand(ICommandDispatchManager cdm)
         {
             Cdm = cdm;
         }

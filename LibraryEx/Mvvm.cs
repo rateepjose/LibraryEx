@@ -139,7 +139,7 @@ namespace LibraryEx
     {
         private static object _lockObj = new object();
         public static Dictionary<string, IRefObjectObserver> Models { get; private set; } = new Dictionary<string, IRefObjectObserver>();
-        public static void AddModelObserverToCollection(Dictionary<string, IRefObjectObserver> items)
+        public static void Add(Dictionary<string, IRefObjectObserver> items)
         {
             lock (_lockObj)
             {

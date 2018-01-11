@@ -10,11 +10,13 @@
     <Grid>
         <VirtualizingStackPanel Orientation="Vertical">
             <TextBlock Text="{Binding Path=[SampleModel2.Data].MO.Object}"/>
-            <TextBlock Text="{Binding Path=[SampleModel1.Data].MO.Object.X}"/>
-            <TextBlock Text="{Binding Path=[SampleModel1.Data].MO.Object.Y}"/>
+            <TextBlock Text="{Binding Path=[ParentSampleModel1.SampleModel1.Data].MO.Object.X}"/>
+            <TextBlock Text="{Binding Path=[ParentSampleModel1.SampleModel1.Data].MO.Object.Y}"/>
             <Button Content="CreateModels" Click="OnButton_CreateModels"/>
-            <Button Content="DoSomethingOnSample1Controller" Command="{Binding Path=Command}" ex:CtrlExtn.ModuleName="SampleModel1" ex:CtrlExtn.CommandName="Reset"/>
-            <TextBlock Text="{Binding Path=[SampleModel1.Reset].MO.Object}"/>
+            <Button Content="DoSomethingOnSample1Controller" Command="{Binding Path=Command}" ex:CtrlExtn.ModuleName="ParentSampleModel1.SampleModel1" ex:CtrlExtn.CommandName="Reset"/>
+            <TextBlock Text="{Binding Path=[ParentSampleModel1.SampleModel1.Reset].MO.Object}"/>
+            <TextBlock Text="{Binding Path=[Local.Data].MO.Object.X}"/>
+            <TextBlock Text="{Binding Path=[Local.Data].MO.Object.Y}"/>
         </VirtualizingStackPanel>
     </Grid>
 </Window>
