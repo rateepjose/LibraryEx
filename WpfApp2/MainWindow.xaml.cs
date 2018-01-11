@@ -72,7 +72,7 @@ namespace WpfApp2
         #region ICommandDispatchClient
 
         public string Name => _aop.Name;
-        public Dictionary<string, string[]> CommandReservationTable { get; private set; }
+        public Dictionary<string, (string[] reservations, string[] subCommands)> CommandToReservationsAndSubCommandsTable { get; private set; }
         public ICommandProxy StartCommand(string command, Dictionary<string, string> parameters, ICommandToken commandToken) => _aop.CreateCommand("StartCommand", _ => PerformStartCommand(command, parameters, commandToken));
         private string PerformStartCommand(string command, Dictionary<string, string> parameters, ICommandToken commandToken)
         {
@@ -99,7 +99,7 @@ namespace WpfApp2
         {
             _aop = new ActiveObjectPart("SampleModel1", TimeSpan.FromMilliseconds(100)) { ServiceFunc = Poll };
             ModelObserverCollection.AddModelObserverToCollection(new Dictionary<string, IRefObjectObserver>() { { $"{_aop.Name}.Data", new RefObjectObserver<CoordinateData>(Data) } });
-            CommandReservationTable = new Dictionary<string, string[]>() { { "Reset", new string[] { $"{Name}", } } };
+            CommandToReservationsAndSubCommandsTable = new Dictionary<string, (string[] reservations, string[] subCommands)>() { { "Reset", (new string[] { $"{Name}", }, new string[] { }) }, };
             _aop.Initialize();
         }
 

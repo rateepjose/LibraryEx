@@ -29,7 +29,7 @@ namespace LibraryEx
         public interface ICommandDispatchClient
         {
             string Name { get; }
-            Dictionary<string, string[]> CommandReservationTable { get; }
+            Dictionary<string, (string[] reservations, string[] subCommands)> CommandToReservationsAndSubCommandsTable { get; }
             ICommandProxy StartCommand(string command, Dictionary<string, string> parameters, ICommandToken commandToken);
         }
 
@@ -60,7 +60,7 @@ namespace LibraryEx
             foreach (var runningCmd in _runningCommands) { if (runningCmd.Value.cmdStatus.IsComplete) { _finishedRunningCmds.Add(runningCmd.Key); } }
             foreach (var finishedRunningCmd in _finishedRunningCmds)
             {
-                var reservations = _commandToReservationsMap[finishedRunningCmd].reservations;
+                var reservations = _commandToClientAndReservationsMap[finishedRunningCmd].reservations;
                 SetReservationsTo(string.Empty, reservations);
                 //Evaluate the Commands based on the reservation changes
                 EvaluateCommandDisableReason(reservations);
@@ -70,36 +70,71 @@ namespace LibraryEx
             _finishedRunningCmds.Clear();
         }
 
-        private Dictionary<string, (ICommandDispatchClient client,string[] reservations)> _commandToReservationsMap = new Dictionary<string, (ICommandDispatchClient, string[])>();
+        private Dictionary<string, (ICommandDispatchClient client,string[] reservations)> _commandToClientAndReservationsMap = new Dictionary<string, (ICommandDispatchClient, string[])>();
         private Dictionary<string, string> _reservationToReasonMap = new Dictionary<string, string>();
         private Dictionary<string, string[]> _reservationToCommandsMap = new Dictionary<string, string[]>();
         private Dictionary<string, RefObjectPublisher<string>> _commandToDisableReasonMap = new Dictionary<string, RefObjectPublisher<string>>();
         public ICommandProxy HarvestCommands() => _aop.CreateCommand("HarvestCommand", _ => PerformHarvestCommands());
         private string PerformHarvestCommands()
         {
-            _commandToReservationsMap.Clear();
+            _commandToClientAndReservationsMap.Clear();
             _reservationToReasonMap.Clear();
             _commandToDisableReasonMap.Clear();
             _reservationToCommandsMap.Clear();
 
+            //Create a temporary table with fullcommandName(controller+command) and tuple of 'client,reservations,subcommands'
+            var cmdToClientAndReservationsAndSubCommands = new Dictionary<string, (ICommandDispatchClient client, string[] reservations, string[] subCommands)>();
             foreach (var client in Clients)
             {
-                foreach (var kvp in client.CommandReservationTable)
+                foreach (var kvp in client.CommandToReservationsAndSubCommandsTable)
                 {
                     string fullNameCommand = $"{client.Name}.{kvp.Key}";
-                    //Create a new table(one to many) with fullcommandName(controller+command) & 'tuple of reservationsList and dispatchClient'
-                    _commandToReservationsMap[fullNameCommand] = (client, kvp.Value);
-                    //Create a new table(one to one) with reservation & reason map
-                    foreach (var reservation in kvp.Value) { _reservationToReasonMap[reservation] = string.Empty; }
+
+                    cmdToClientAndReservationsAndSubCommands[fullNameCommand] = (client, kvp.Value.reservations, kvp.Value.subCommands);
                     //Create a new table(one to one) with command & DisableReason
                     _commandToDisableReasonMap[fullNameCommand] = new RefObjectPublisher<string>() { Object = string.Empty };
                 }
             }
+
+            //Create a new table with fullcommandName(controller+command) & 'tuple of dispatchClient and reservationsList' with subcommands(if any) needs to be translated to corresponding reservations
+            List<string> commands = cmdToClientAndReservationsAndSubCommands.Keys.ToList();
+            while (cmdToClientAndReservationsAndSubCommands.Count > _commandToClientAndReservationsMap.Count)
+            {
+                List<string> harvestCompletedCmds = new List<string>();
+                foreach (var cmd in commands)
+                {
+                    if (TryGetAllReservations(cmd, cmdToClientAndReservationsAndSubCommands, out var rsvtns))
+                    {
+                        _commandToClientAndReservationsMap[cmd] = (cmdToClientAndReservationsAndSubCommands[cmd].client, rsvtns);
+                        harvestCompletedCmds.Add(cmd);
+                    }
+                }
+                foreach (var item in harvestCompletedCmds) { commands.Remove(item); }
+            }
+
+            //Create a new table(one to one) with reservation & reason map
+            foreach (var clientAndReservations in _commandToClientAndReservationsMap.Values) { foreach (string reservation in clientAndReservations.reservations) { _reservationToReasonMap[reservation] = string.Empty; } }
+
             //Create a new table(one to many) (for reverse lookup) with reservation & commands
-            _reservationToCommandsMap = _reservationToReasonMap.ToDictionary(a => a.Key, b => _commandToReservationsMap.Where(x => x.Value.reservations.Contains(b.Key)).Select(y => y.Key).ToArray());
+            _reservationToCommandsMap = _reservationToReasonMap.ToDictionary(a => a.Key, b => _commandToClientAndReservationsMap.Where(x => x.Value.reservations.Contains(b.Key)).Select(y => y.Key).ToArray());
             //Add the same to the ModelObserverCollection so that UI can subscribe if required
             ModelObserverCollection.AddModelObserverToCollection(_commandToDisableReasonMap.ToDictionary(a => a.Key, b => new RefObjectObserver<string>(b.Value) as IRefObjectObserver));
             return string.Empty;
+        }
+
+        private bool TryGetAllReservations(string command, Dictionary<string, (ICommandDispatchClient client, string[] reservations, string[] subCommands)> cmdToClientAndReservationsAndSubCommands, out string[] rsvtns)
+        {
+            rsvtns = new string[0];
+            if (!cmdToClientAndReservationsAndSubCommands.TryGetValue(command, out var clientAndReservationsAndSubCommands)) { return false; }
+
+            List<string> rsvtnList = new List<string>(clientAndReservationsAndSubCommands.reservations);
+            foreach (string subCommand in clientAndReservationsAndSubCommands.subCommands)
+            {
+                if (!TryGetAllReservations(subCommand, cmdToClientAndReservationsAndSubCommands, out var reservations)) { return false; }
+                rsvtnList.AddRange(reservations);
+            }
+            rsvtns = rsvtnList.ToArray();
+            return true;
         }
 
         private void SetReservationsTo(string reservationReason, string[] reservations)
@@ -120,7 +155,7 @@ namespace LibraryEx
             if (_runningCommands.ContainsKey(fullNameCommand)) return $"Command '{command}' registered by {name} is currently running";
 
             //lookup for the command
-            if (!_commandToReservationsMap.TryGetValue(fullNameCommand, out var resTable)) { return $"Command '{command}' not found in '{name}'"; }
+            if (!_commandToClientAndReservationsMap.TryGetValue(fullNameCommand, out var resTable)) { return $"Command '{command}' not found in '{name}'"; }
 
             //Check if the current command(subcommand) issued matches in token with an already issued command(if so then it can bypass the reservations check and setting)
             if (_runningCommands.Values.Any(x => x.cmdToken == commandToken)) { }
@@ -151,7 +186,7 @@ namespace LibraryEx
             foreach (string command in commands)
             {
                 disableReason.Clear();
-                string[] cmdReservations = _commandToReservationsMap[command].reservations.ToArray();
+                string[] cmdReservations = _commandToClientAndReservationsMap[command].reservations.ToArray();
                 int itemIndex = 1;
                 foreach (string cmdReservation in cmdReservations)
                 {
