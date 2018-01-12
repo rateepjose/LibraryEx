@@ -30,15 +30,7 @@ namespace LibraryEx
             return this;
         }
 
-        public IBindingObject this[string key]
-        {
-            get
-            {
-                IBindingObject data = null;
-                try { data = _bindingObjects[key]; } catch { }
-                return data ?? BindingObjectFactory.DefaultBindingObject;
-            }
-        }
+        public IBindingObject this[string key] => _bindingObjects.TryGetValue(key, out IBindingObject data) ? data : BindingObjectFactory.DefaultBindingObject;
 
         private bool _initialized = false;
         private bool CheckIfFullyInitialized()
