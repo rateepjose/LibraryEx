@@ -13,7 +13,7 @@
             <TextBlock Text="{Binding Path=[ParentSampleModel1.SampleModel1.Data].MO.Object.X}"/>
             <TextBlock Text="{Binding Path=[ParentSampleModel1.SampleModel1.Data].MO.Object.Y}"/>
             <Button Content="CreateModels" Click="OnButton_CreateModels"/>
-            <Button Content="DoSomethingOnSample1Controller" Command="{Binding Path=Command}" ex:CtrlExtn.ModuleName="ParentSampleModel1.SampleModel1" ex:CtrlExtn.CommandName="Reset"/>
+            <Button Content="DoSomethingOnSample1Controller" Command="{Binding Path=Command}" ex:CtrlExtn.ModuleName="ParentSampleModel1.SampleModel1" ex:CtrlExtn.CommandName="Reset" ex:CtrlExtn.DisableReason="{Binding Path=[ParentSampleModel1.SampleModel1.Reset].MO.Object}"/>
             <TextBlock Text="{Binding Path=[ParentSampleModel1.SampleModel1.Reset].MO.Object}"/>
             <TextBlock Text="{Binding Path=[Local.Data].MO.Object.X}"/>
             <TextBlock Text="{Binding Path=[Local.Data].MO.Object.Y}"/>

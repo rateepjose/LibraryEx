@@ -65,7 +65,7 @@ namespace LibraryEx
 
             #region Constructor and Destructor
 
-            public CommandDispatchManager() => (_aop = new ActiveObjectPart("CommandDispatchManager") { ServiceFunc = Poll }).Initialize();
+            public CommandDispatchManager() => (_aop = new ActiveObjectPart("CommandDispatchManager", TimeSpan.FromMilliseconds(5)) { ServiceFunc = Poll }).Initialize();
 
             #endregion
 

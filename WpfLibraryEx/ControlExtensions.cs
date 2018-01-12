@@ -9,13 +9,14 @@ namespace LibraryEx
 {
     public class CtrlExtn : DependencyObject
     {
-        #region Public Constatants
+        #region Public Constants
 
         public static string ModuleName => nameof(ModuleName);
         public static string CommandName => nameof(CommandName);
         public static string Parameters => nameof(Parameters);
         public static string KeyName => nameof(KeyName);
         public static string KeyValue => nameof(KeyValue);
+        public static string DisableReason => nameof(DisableReason);
 
         #endregion
 
@@ -35,6 +36,27 @@ namespace LibraryEx
         public static string GetKeyValue(DependencyObject d) => (string)d.GetValue(KeyValueProperty);
         public static void SetKeyValue(DependencyObject d, string value) => d.SetValue(KeyValueProperty, value);
 
+        public static readonly DependencyProperty DisableReasonProperty = DependencyProperty.RegisterAttached(DisableReason, typeof(string), typeof(CtrlExtn), new PropertyMetadata(string.Empty, OnDisablePropertySet));
+        public static string GetDisableReason(DependencyObject d) => (string)d.GetValue(DisableReasonProperty);
+        public static void SetDisableReason(DependencyObject d, string value) => d.SetValue(DisableReasonProperty, value);
+
+        private static void OnDisablePropertySet(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        {
+            var f = d as FrameworkElement;
+            if (f == null) return;
+            string disableReason = GetDisableReason(d);
+            if (disableReason.IsNullOrEmpty())
+            {
+                f.IsEnabled = true;
+                f.ToolTip = null;
+            }
+            else
+            {
+                f.IsEnabled = false;
+                f.ToolTip = disableReason;
+            }
+        }
+
         /// <summary>
         /// Subscribed only by Module Name UNDER THE ASSUMPTION that this property is always PRESENT for any command to be sent to the models via the Dispatcher
         /// </summary>
@@ -43,7 +65,8 @@ namespace LibraryEx
         private static void OnInit(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
             if (d == null) return;
-            switch(d)
+            System.Windows.Controls.ToolTipService.SetShowOnDisabled(d, true);
+            switch (d)
             {
                 case System.Windows.Controls.Primitives.ButtonBase b:
                     {

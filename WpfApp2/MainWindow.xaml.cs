@@ -87,10 +87,10 @@ namespace WpfApp2
 
         public Dictionary<string, (string[] reservations, string[] subCommands)> CommandToReservationsAndSubCommandsTable { get; set; }
 
-        public ICommandProxy StartCommand(string command, Dictionary<string, string> parameters, ICommandToken commandToken)
-        {
-            throw new NotImplementedException();
-        }
+        public ICommandProxy StartCommand(string command, Dictionary<string, string> parameters, ICommandToken commandToken) => _aop.CreateCommand("StartCommand", _ => PerformStartCommand(command, parameters, commandToken));
+
+        private string PerformStartCommand(string command, Dictionary<string, string> parameters, ICommandToken commandToken) => "not implemented";
+
         
         #endregion
     }
@@ -104,9 +104,10 @@ namespace WpfApp2
         public ICommandProxy StartCommand(string command, Dictionary<string, string> parameters, ICommandToken commandToken) => _aop.CreateCommand("StartCommand", _ => PerformStartCommand(command, parameters, commandToken));
         private string PerformStartCommand(string command, Dictionary<string, string> parameters, ICommandToken commandToken)
         {
+            Logger.Debug.WriteLine($"{nameof(SampleModel1)}.PerformStartCommand");
             switch (command)
             {
-                case "Reset": i = 0; Poll(); System.Threading.Thread.Sleep(1000); break;
+                case "Reset": i = 0; Poll(); System.Threading.Thread.Sleep(5000); break;
                 default: break;
             }
             return string.Empty;
@@ -171,6 +172,7 @@ namespace WpfApp2
 
         public void Execute(object parameter)
         {
+            Logger.Debug.WriteLine("OnButtonPressed");
             var x = parameter as Dictionary<string, object>;
             var p = x[CtrlExtn.Parameters] as Dictionary<string, object>;
             Cdm.DispatchCommand(x[CtrlExtn.ModuleName] as string, x[CtrlExtn.CommandName] as string, new Dictionary<string, string>()).Start();
