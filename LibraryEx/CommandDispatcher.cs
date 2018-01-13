@@ -12,12 +12,12 @@ namespace LibraryEx
     {
         string Name { get; }
         Dictionary<string, (string[] reservations, string[] subCommands)> CommandToReservationsAndSubCommandsTable { get; }
-        ICommandProxy StartCommand(string command, Dictionary<string, string> parameters, ICommandToken commandToken);
+        ICommandProxy StartCommand(string command, Dictionary<string, object> parameters, ICommandToken commandToken);
     }
 
     public interface ICommandDispatchManager
     {
-        ICommandProxy DispatchCommand(string name, string command, Dictionary<string, string> parameters, ICommandToken commandToken = null);
+        ICommandProxy DispatchCommand(string name, string command, Dictionary<string, object> parameters, ICommandToken commandToken = null);
     }
 
     /// <summary>
@@ -159,8 +159,8 @@ namespace LibraryEx
             }
 
             private Dictionary<string, (ICommandStatus cmdStatus, ICommandToken cmdToken)> _runningCommands = new Dictionary<string, (ICommandStatus, ICommandToken)>();
-            public ICommandProxy DispatchCommand(string name, string command, Dictionary<string, string> parameters, ICommandToken commandToken = null) => _aop.CreateCommand("DispatchCommand", x => PerformDispatchCommand(name, command, parameters, commandToken, x));
-            private string PerformDispatchCommand(string name, string command, Dictionary<string, string> parameters, ICommandToken commandToken, ICommandInteraction commandParams)
+            public ICommandProxy DispatchCommand(string name, string command, Dictionary<string, object> parameters, ICommandToken commandToken = null) => _aop.CreateCommand("DispatchCommand", x => PerformDispatchCommand(name, command, parameters, commandToken, x));
+            private string PerformDispatchCommand(string name, string command, Dictionary<string, object> parameters, ICommandToken commandToken, ICommandInteraction commandParams)
             {
                 //Create commandToken if not an existing request
                 commandToken = (commandToken as CommandToken) ?? new CommandToken();

@@ -57,7 +57,7 @@ namespace WpfApp2
 
 
             CommandDispatcher.InitializeCommandDispatchManager().Run();
-            _vh.Command = new TestCommand(CommandDispatcher.CmdDispatchMgr);
+            //_vh.Command = new TestCommand(CommandDispatcher.CmdDispatchMgr);
 
             //for (int i = 0; i < 1000; ++i) Logger.Info.WriteLine($"{i}");
 
@@ -87,9 +87,9 @@ namespace WpfApp2
 
         public Dictionary<string, (string[] reservations, string[] subCommands)> CommandToReservationsAndSubCommandsTable { get; set; }
 
-        public ICommandProxy StartCommand(string command, Dictionary<string, string> parameters, ICommandToken commandToken) => _aop.CreateCommand("StartCommand", _ => PerformStartCommand(command, parameters, commandToken));
+        public ICommandProxy StartCommand(string command, Dictionary<string, object> parameters, ICommandToken commandToken) => _aop.CreateCommand("StartCommand", _ => PerformStartCommand(command, parameters, commandToken));
 
-        private string PerformStartCommand(string command, Dictionary<string, string> parameters, ICommandToken commandToken) => "not implemented";
+        private string PerformStartCommand(string command, Dictionary<string, object> parameters, ICommandToken commandToken) => "not implemented";
 
         
         #endregion
@@ -101,8 +101,8 @@ namespace WpfApp2
 
         public string Name => _aop.Name;
         public Dictionary<string, (string[] reservations, string[] subCommands)> CommandToReservationsAndSubCommandsTable { get; private set; }
-        public ICommandProxy StartCommand(string command, Dictionary<string, string> parameters, ICommandToken commandToken) => _aop.CreateCommand("StartCommand", _ => PerformStartCommand(command, parameters, commandToken));
-        private string PerformStartCommand(string command, Dictionary<string, string> parameters, ICommandToken commandToken)
+        public ICommandProxy StartCommand(string command, Dictionary<string, object> parameters, ICommandToken commandToken) => _aop.CreateCommand("StartCommand", _ => PerformStartCommand(command, parameters, commandToken));
+        private string PerformStartCommand(string command, Dictionary<string, object> parameters, ICommandToken commandToken)
         {
             Logger.Debug.WriteLine($"{nameof(SampleModel1)}.PerformStartCommand");
             switch (command)
@@ -163,24 +163,4 @@ namespace WpfApp2
     }
     #endregion
 
-    public class TestCommand : System.Windows.Input.ICommand
-    {
-        public ICommandDispatchManager Cdm { get; private set; }
-        public event EventHandler CanExecuteChanged;
-
-        public bool CanExecute(object parameter) => true;
-
-        public void Execute(object parameter)
-        {
-            Logger.Debug.WriteLine("OnButtonPressed");
-            var x = parameter as Dictionary<string, object>;
-            var p = x[CtrlExtn.Parameters] as Dictionary<string, object>;
-            Cdm.DispatchCommand(x[CtrlExtn.ModuleName] as string, x[CtrlExtn.CommandName] as string, new Dictionary<string, string>()).Start();
-        }
-
-        public TestCommand(ICommandDispatchManager cdm)
-        {
-            Cdm = cdm;
-        }
-    }
 }

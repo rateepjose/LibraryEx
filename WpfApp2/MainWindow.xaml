@@ -5,6 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:WpfApp2"
         xmlns:ex="clr-namespace:LibraryEx;assembly=WpfLibraryEx"
+        xmlns:sys="clr-namespace:System;assembly=mscorlib"
         mc:Ignorable="d"
         Title="{Binding Path=[SampleModel2.Data].MO.Object}" Height="350" Width="525">
     <Grid>
@@ -12,8 +13,9 @@
             <TextBlock Text="{Binding Path=[SampleModel2.Data].MO.Object}"/>
             <TextBlock Text="{Binding Path=[ParentSampleModel1.SampleModel1.Data].MO.Object.X}"/>
             <TextBlock Text="{Binding Path=[ParentSampleModel1.SampleModel1.Data].MO.Object.Y}"/>
-            <Button Content="CreateModels" Click="OnButton_CreateModels"/>
-            <Button Content="DoSomethingOnSample1Controller" Command="{Binding Path=Command}" ex:CtrlExtn.ModuleName="ParentSampleModel1.SampleModel1" ex:CtrlExtn.CommandName="Reset" ex:CtrlExtn.DisableReason="{Binding Path=[ParentSampleModel1.SampleModel1.Reset].MO.Object}"/>
+            <Button Content="CreateModels" Click="OnButton_CreateModels" x:Name="CreateButton"/>
+            <Button Content="DoSomethingOnSample1Controller" ex:CtrlExtn.ModuleName="ParentSampleModel1.SampleModel1" ex:CtrlExtn.CommandName="Reset" ex:CtrlExtn.DisableReason="{Binding Path=[ParentSampleModel1.SampleModel1.Reset].MO.Object}" ex:CtrlExtn.ParamName="abc" ex:CtrlExtn.ParamValue="{Binding Path=[SampleModel2.Data].MO.Object}">
+            </Button>
             <TextBlock Text="{Binding Path=[ParentSampleModel1.SampleModel1.Reset].MO.Object}"/>
             <TextBlock Text="{Binding Path=[Local.Data].MO.Object.X}"/>
             <TextBlock Text="{Binding Path=[Local.Data].MO.Object.Y}"/>

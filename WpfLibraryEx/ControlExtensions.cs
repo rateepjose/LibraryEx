@@ -14,8 +14,8 @@ namespace LibraryEx
         public static string ModuleName => nameof(ModuleName);
         public static string CommandName => nameof(CommandName);
         public static string Parameters => nameof(Parameters);
-        public static string KeyName => nameof(KeyName);
-        public static string KeyValue => nameof(KeyValue);
+        public static string ParamName => nameof(ParamName);
+        public static string ParamValue => nameof(ParamValue);
         public static string DisableReason => nameof(DisableReason);
 
         #endregion
@@ -28,17 +28,18 @@ namespace LibraryEx
         public static string GetCommandName(DependencyObject d) => (string)d.GetValue(CommandNameProperty);
         public static void SetCommandName(DependencyObject d, string value) => d.SetValue(CommandNameProperty, value);
 
-        public static readonly DependencyProperty KeyNameProperty = DependencyProperty.RegisterAttached(KeyName, typeof(string), typeof(CtrlExtn), new PropertyMetadata(string.Empty));
-        public static string GetKeyName(DependencyObject d) => (string)d.GetValue(KeyNameProperty);
-        public static void SetKeyName(DependencyObject d, string value) => d.SetValue(KeyNameProperty, value);
+        public static readonly DependencyProperty ParamNameProperty = DependencyProperty.RegisterAttached(ParamName, typeof(string), typeof(CtrlExtn), new PropertyMetadata(string.Empty));
+        public static string GetParamName(DependencyObject d) => (string)d.GetValue(ParamNameProperty);
+        public static void SetParamName(DependencyObject d, string value) => d.SetValue(ParamNameProperty, value);
 
-        public static readonly DependencyProperty KeyValueProperty = DependencyProperty.RegisterAttached(KeyValue, typeof(string), typeof(CtrlExtn), new PropertyMetadata(string.Empty));
-        public static string GetKeyValue(DependencyObject d) => (string)d.GetValue(KeyValueProperty);
-        public static void SetKeyValue(DependencyObject d, string value) => d.SetValue(KeyValueProperty, value);
+        public static readonly DependencyProperty ParamValueProperty = DependencyProperty.RegisterAttached(ParamValue, typeof(object), typeof(CtrlExtn), new PropertyMetadata(null));
+        public static object GetParamValue(DependencyObject d) => (object)d.GetValue(ParamValueProperty);
+        public static void SetParamValue(DependencyObject d, object value) => d.SetValue(ParamValueProperty, value);
 
         public static readonly DependencyProperty DisableReasonProperty = DependencyProperty.RegisterAttached(DisableReason, typeof(string), typeof(CtrlExtn), new PropertyMetadata(string.Empty, OnDisablePropertySet));
         public static string GetDisableReason(DependencyObject d) => (string)d.GetValue(DisableReasonProperty);
         public static void SetDisableReason(DependencyObject d, string value) => d.SetValue(DisableReasonProperty, value);
+
 
         private static void OnDisablePropertySet(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
@@ -85,35 +86,36 @@ namespace LibraryEx
             return;
         }
 
+        #region Button Events
+
         private static void ButtonBase_Initialized(object sender, EventArgs e)
         {
             var b = sender as System.Windows.Controls.Primitives.ButtonBase;
-            b.CommandParameter = CreateCommandParameter(b);
-            if (!GetKeyName(b).IsNullOrEmpty()) { b.Click += OnButtonBaseClicked; }
+            if (!GetModuleName(b).IsNullOrEmpty()) { b.Click += OnButtonBaseClicked; }
         }
-
         private static void OnButtonBaseClicked(object sender, RoutedEventArgs e)
         {
             var b = sender as System.Windows.Controls.Primitives.ButtonBase;
-            ((b.CommandParameter as Dictionary<string, object>)[Parameters] as Dictionary<string, object>)[GetKeyName(b)] = GetKeyValue(b);
+            CommandDispatcher.CmdDispatchMgr.DispatchCommand(GetModuleName(b), GetCommandName(b), new Dictionary<string, object>() { { GetParamName(b), GetParamValue(b) } }).Start();
+            Logging.Logger.Debug.WriteLine("ButtonClicked");
         }
+
+        #endregion
+
+        #region Textbox Events
 
         private static void TextBox_Initialized(object sender, EventArgs e)
         {
             var t = sender as System.Windows.Controls.TextBox;
-            t.InputBindings[0].CommandParameter = CreateCommandParameter(t);
-            if (!GetKeyName(t).IsNullOrEmpty()) { t.PreviewKeyDown += OnTextBoxKeyUp; }
+            if (!GetParamName(t).IsNullOrEmpty()) { t.PreviewKeyDown += OnTextBoxKeyUp; }
         }
-
         private static void OnTextBoxKeyUp(object sender, System.Windows.Input.KeyEventArgs e)
         {
             if (e.Key != System.Windows.Input.Key.Enter) { return; }
             var t = sender as System.Windows.Controls.TextBox;
-            ((t.InputBindings[0].CommandParameter as Dictionary<string, object>)[Parameters] as Dictionary<string, object>)[GetKeyName(t)] = GetKeyValue(t);
+            CommandDispatcher.CmdDispatchMgr.DispatchCommand(GetModuleName(t), GetCommandName(t), new Dictionary<string, object>() { { GetParamName(t), GetParamValue(t) } }).Start();
         }
 
-        private static Dictionary<string, object> CreateCommandParameter(DependencyObject d) => new Dictionary<string, object>() { { ModuleName, GetModuleName(d) },
-                                                                                                                                   { CommandName, GetCommandName(d) },
-                                                                                                                                   { Parameters, new Dictionary<string, object>() } };
+        #endregion
     }
 }
