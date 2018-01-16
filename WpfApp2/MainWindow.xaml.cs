@@ -87,9 +87,9 @@ namespace WpfApp2
 
         public Dictionary<string, (string[] reservations, string[] subCommands)> CommandToReservationsAndSubCommandsTable { get; set; }
 
-        public ICommandProxy StartCommand(string command, Dictionary<string, object> parameters, ICommandToken commandToken) => _aop.CreateCommand("StartCommand", _ => PerformStartCommand(command, parameters, commandToken));
+        public ICommandProxy StartCommand(string command, Dictionary<string, IDataParam> parameters, ICommandToken commandToken) => _aop.CreateCommand("StartCommand", _ => PerformStartCommand(command, parameters, commandToken));
 
-        private string PerformStartCommand(string command, Dictionary<string, object> parameters, ICommandToken commandToken) => "not implemented";
+        private string PerformStartCommand(string command, Dictionary<string, IDataParam> parameters, ICommandToken commandToken) => "not implemented";
 
         
         #endregion
@@ -101,8 +101,8 @@ namespace WpfApp2
 
         public string Name => _aop.Name;
         public Dictionary<string, (string[] reservations, string[] subCommands)> CommandToReservationsAndSubCommandsTable { get; private set; }
-        public ICommandProxy StartCommand(string command, Dictionary<string, object> parameters, ICommandToken commandToken) => _aop.CreateCommand("StartCommand", _ => PerformStartCommand(command, parameters, commandToken));
-        private string PerformStartCommand(string command, Dictionary<string, object> parameters, ICommandToken commandToken)
+        public ICommandProxy StartCommand(string command, Dictionary<string, IDataParam> parameters, ICommandToken commandToken) => _aop.CreateCommand("StartCommand", _ => PerformStartCommand(command, parameters, commandToken));
+        private string PerformStartCommand(string command, Dictionary<string, IDataParam> parameters, ICommandToken commandToken)
         {
             Logger.Debug.WriteLine($"{nameof(SampleModel1)}.PerformStartCommand");
             switch (command)

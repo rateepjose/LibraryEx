@@ -14,8 +14,7 @@
             <TextBlock Text="{Binding Path=[ParentSampleModel1.SampleModel1.Data].MO.Object.X}"/>
             <TextBlock Text="{Binding Path=[ParentSampleModel1.SampleModel1.Data].MO.Object.Y}"/>
             <Button Content="CreateModels" Click="OnButton_CreateModels" x:Name="CreateButton"/>
-            <Button Content="DoSomethingOnSample1Controller" ex:CtrlExtn.ModuleName="ParentSampleModel1.SampleModel1" ex:CtrlExtn.CommandName="Reset" ex:CtrlExtn.DisableReason="{Binding Path=[ParentSampleModel1.SampleModel1.Reset].MO.Object}" ex:CtrlExtn.ParamName="abc" ex:CtrlExtn.ParamValue="{Binding Path=[SampleModel2.Data].MO.Object}">
-            </Button>
+            <Button Content="DoSomethingOnSample1Controller" ex:CtrlExtn.ModuleName="ParentSampleModel1.SampleModel1" ex:CtrlExtn.CommandName="Reset" ex:CtrlExtn.DisableReason="{Binding Path=[ParentSampleModel1.SampleModel1.Reset].MO.Object}" ex:CtrlExtn.ParamName="abc" ex:CtrlExtn.ParamValue="{Binding Path=[ParentSampleModel1.SampleModel1.Data].MO.Object.X}"/>
             <TextBlock Text="{Binding Path=[ParentSampleModel1.SampleModel1.Reset].MO.Object}"/>
             <TextBlock Text="{Binding Path=[Local.Data].MO.Object.X}"/>
             <TextBlock Text="{Binding Path=[Local.Data].MO.Object.Y}"/>

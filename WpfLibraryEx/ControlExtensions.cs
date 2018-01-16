@@ -23,46 +23,7 @@ namespace LibraryEx
         public static readonly DependencyProperty ModuleNameProperty = DependencyProperty.RegisterAttached(ModuleName, typeof(string), typeof(CtrlExtn), new PropertyMetadata(string.Empty, OnInit));
         public static string GetModuleName(DependencyObject d) => (string)d.GetValue(ModuleNameProperty);
         public static void SetModuleName(DependencyObject d, string value) => d.SetValue(ModuleNameProperty, value);
-
-        public static readonly DependencyProperty CommandNameProperty = DependencyProperty.RegisterAttached(CommandName, typeof(string), typeof(CtrlExtn), new PropertyMetadata(string.Empty));
-        public static string GetCommandName(DependencyObject d) => (string)d.GetValue(CommandNameProperty);
-        public static void SetCommandName(DependencyObject d, string value) => d.SetValue(CommandNameProperty, value);
-
-        public static readonly DependencyProperty ParamNameProperty = DependencyProperty.RegisterAttached(ParamName, typeof(string), typeof(CtrlExtn), new PropertyMetadata(string.Empty));
-        public static string GetParamName(DependencyObject d) => (string)d.GetValue(ParamNameProperty);
-        public static void SetParamName(DependencyObject d, string value) => d.SetValue(ParamNameProperty, value);
-
-        public static readonly DependencyProperty ParamValueProperty = DependencyProperty.RegisterAttached(ParamValue, typeof(object), typeof(CtrlExtn), new PropertyMetadata(null));
-        public static object GetParamValue(DependencyObject d) => (object)d.GetValue(ParamValueProperty);
-        public static void SetParamValue(DependencyObject d, object value) => d.SetValue(ParamValueProperty, value);
-
-        public static readonly DependencyProperty DisableReasonProperty = DependencyProperty.RegisterAttached(DisableReason, typeof(string), typeof(CtrlExtn), new PropertyMetadata(string.Empty, OnDisablePropertySet));
-        public static string GetDisableReason(DependencyObject d) => (string)d.GetValue(DisableReasonProperty);
-        public static void SetDisableReason(DependencyObject d, string value) => d.SetValue(DisableReasonProperty, value);
-
-
-        private static void OnDisablePropertySet(DependencyObject d, DependencyPropertyChangedEventArgs e)
-        {
-            var f = d as FrameworkElement;
-            if (f == null) return;
-            string disableReason = GetDisableReason(d);
-            if (disableReason.IsNullOrEmpty())
-            {
-                f.IsEnabled = true;
-                f.ToolTip = null;
-            }
-            else
-            {
-                f.IsEnabled = false;
-                f.ToolTip = disableReason;
-            }
-        }
-
-        /// <summary>
-        /// Subscribed only by Module Name UNDER THE ASSUMPTION that this property is always PRESENT for any command to be sent to the models via the Dispatcher
-        /// </summary>
-        /// <param name="d"></param>
-        /// <param name="e"></param>
+        /// <summary> Subscribed only by Module Name UNDER THE ASSUMPTION that this property is always PRESENT for any command to be sent to the models via the Dispatcher </summary>
         private static void OnInit(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
             if (d == null) return;
@@ -86,6 +47,40 @@ namespace LibraryEx
             return;
         }
 
+        public static readonly DependencyProperty CommandNameProperty = DependencyProperty.RegisterAttached(CommandName, typeof(string), typeof(CtrlExtn), new PropertyMetadata(string.Empty));
+        public static string GetCommandName(DependencyObject d) => (string)d.GetValue(CommandNameProperty);
+        public static void SetCommandName(DependencyObject d, string value) => d.SetValue(CommandNameProperty, value);
+
+        public static readonly DependencyProperty ParamNameProperty = DependencyProperty.RegisterAttached(ParamName, typeof(string), typeof(CtrlExtn), new PropertyMetadata(string.Empty));
+        public static string GetParamName(DependencyObject d) => (string)d.GetValue(ParamNameProperty);
+        public static void SetParamName(DependencyObject d, string value) => d.SetValue(ParamNameProperty, value);
+
+        public static readonly DependencyProperty ParamValueProperty = DependencyProperty.RegisterAttached(ParamValue, typeof(object), typeof(CtrlExtn), new PropertyMetadata(null));
+        public static object GetParamValue(DependencyObject d) => (object)d.GetValue(ParamValueProperty);
+        public static void SetParamValue(DependencyObject d, object value) => d.SetValue(ParamValueProperty, value);
+
+        public static readonly DependencyProperty DisableReasonProperty = DependencyProperty.RegisterAttached(DisableReason, typeof(string), typeof(CtrlExtn), new PropertyMetadata(string.Empty, OnDisablePropertySet));
+        public static string GetDisableReason(DependencyObject d) => (string)d.GetValue(DisableReasonProperty);
+        public static void SetDisableReason(DependencyObject d, string value) => d.SetValue(DisableReasonProperty, value);
+        /// <summary> Exclusived Subscribed by DisableReason DependencyProperty </summary>
+        private static void OnDisablePropertySet(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        {
+            var f = d as FrameworkElement;
+            if (f == null) return;
+            string disableReason = GetDisableReason(d);
+            if (disableReason.IsNullOrEmpty())
+            {
+                f.IsEnabled = true;
+                f.ToolTip = null;
+            }
+            else
+            {
+                f.IsEnabled = false;
+                f.ToolTip = disableReason;
+            }
+        }
+
+
         #region Button Events
 
         private static void ButtonBase_Initialized(object sender, EventArgs e)
@@ -96,7 +91,7 @@ namespace LibraryEx
         private static void OnButtonBaseClicked(object sender, RoutedEventArgs e)
         {
             var b = sender as System.Windows.Controls.Primitives.ButtonBase;
-            CommandDispatcher.CmdDispatchMgr.DispatchCommand(GetModuleName(b), GetCommandName(b), new Dictionary<string, object>() { { GetParamName(b), GetParamValue(b) } }).Start();
+            CommandDispatcher.CmdDispatchMgr.DispatchCommand(GetModuleName(b), GetCommandName(b), new Dictionary<string, IDataParam>() { { GetParamName(b), ConvertObjectToDataParam(GetParamValue(b)) } }).Start();
             Logging.Logger.Debug.WriteLine("ButtonClicked");
         }
 
@@ -113,7 +108,32 @@ namespace LibraryEx
         {
             if (e.Key != System.Windows.Input.Key.Enter) { return; }
             var t = sender as System.Windows.Controls.TextBox;
-            CommandDispatcher.CmdDispatchMgr.DispatchCommand(GetModuleName(t), GetCommandName(t), new Dictionary<string, object>() { { GetParamName(t), GetParamValue(t) } }).Start();
+            CommandDispatcher.CmdDispatchMgr.DispatchCommand(GetModuleName(t), GetCommandName(t), new Dictionary<string, IDataParam>() { { GetParamName(t), ConvertObjectToDataParam(GetParamValue(t)) } }).Start();
+        }
+
+        #endregion
+
+        #region IData Factory Helper
+
+        private static IDataParam ConvertObjectToDataParam(object data)
+        {
+            switch (data)
+            {
+                case bool b: return new DataParam<bool>(b);
+                case byte by: return new DataParam<byte>(by);
+                case sbyte sb: return new DataParam<sbyte>(sb);
+                case char c: return new DataParam<char>(c);
+                case ushort ush: return new DataParam<ushort>(ush);
+                case short sh: return new DataParam<short>(sh);
+                case float f: return new DataParam<float>(f);
+                case uint ui: return new DataParam<uint>(ui);
+                case int i: return new DataParam<int>(i);
+                case ulong ul: return new DataParam<ulong>(ul);
+                case long l: return new DataParam<long>(l);
+                case double d: return new DataParam<double>(d);
+                case string s: return new DataParam<string>(s);
+                default: return new DataParam<object>(data);
+            }
         }
 
         #endregion

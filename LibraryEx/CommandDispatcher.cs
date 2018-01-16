@@ -8,16 +8,23 @@ namespace LibraryEx
 {
     public interface ICommandToken { }
 
+    public interface IDataParam { }
+    public class DataParam<Param> : IDataParam
+    {
+        public DataParam(Param value) => Value = value;
+        public Param Value { get; private set; }
+    }
+
     public interface ICommandDispatchClient
     {
         string Name { get; }
         Dictionary<string, (string[] reservations, string[] subCommands)> CommandToReservationsAndSubCommandsTable { get; }
-        ICommandProxy StartCommand(string command, Dictionary<string, object> parameters, ICommandToken commandToken);
+        ICommandProxy StartCommand(string command, Dictionary<string, IDataParam> parameters, ICommandToken commandToken);
     }
 
     public interface ICommandDispatchManager
     {
-        ICommandProxy DispatchCommand(string name, string command, Dictionary<string, object> parameters, ICommandToken commandToken = null);
+        ICommandProxy DispatchCommand(string name, string command, Dictionary<string, IDataParam> parameters, ICommandToken commandToken = null);
     }
 
     /// <summary>
@@ -159,8 +166,8 @@ namespace LibraryEx
             }
 
             private Dictionary<string, (ICommandStatus cmdStatus, ICommandToken cmdToken)> _runningCommands = new Dictionary<string, (ICommandStatus, ICommandToken)>();
-            public ICommandProxy DispatchCommand(string name, string command, Dictionary<string, object> parameters, ICommandToken commandToken = null) => _aop.CreateCommand("DispatchCommand", x => PerformDispatchCommand(name, command, parameters, commandToken, x));
-            private string PerformDispatchCommand(string name, string command, Dictionary<string, object> parameters, ICommandToken commandToken, ICommandInteraction commandParams)
+            public ICommandProxy DispatchCommand(string name, string command, Dictionary<string, IDataParam> parameters, ICommandToken commandToken = null) => _aop.CreateCommand("DispatchCommand", x => PerformDispatchCommand(name, command, parameters, commandToken, x));
+            private string PerformDispatchCommand(string name, string command, Dictionary<string, IDataParam> parameters, ICommandToken commandToken, ICommandInteraction commandParams)
             {
                 //Create commandToken if not an existing request
                 commandToken = (commandToken as CommandToken) ?? new CommandToken();
