@@ -20,9 +20,10 @@ namespace LibraryEx.Logging
     {
         void WriteLog(DateTime dateTime, LogType logType, string message);
     }
+    public interface IMessageLogger { void WriteLine(string message); }
     public static class Logger
     {
-        public class MessageLogger
+        private class MessageLogger :IMessageLogger
         {
             Action<string> _func;
             public MessageLogger(Action<string> func) => _func = func;
@@ -31,23 +32,15 @@ namespace LibraryEx.Logging
 
         private static (ILogClient client, LogType filter)[] _logClients = new(ILogClient, LogType)[0];
         private static ActiveObjectPart _aop;
-        static Logger()
-        {
-            _aop = new ActiveObjectPart("Logger");
-            _aop.Initialize();
-        }
+        static Logger() => (_aop = new ActiveObjectPart("Logger")).Initialize();
 
-        private static MessageLogger _debug = new MessageLogger(msg => WriteLine(LogType.Debug, msg));
-        public static MessageLogger Debug => _debug;
+        public static IMessageLogger Debug { get; private set; } = new MessageLogger(msg => WriteLine(LogType.Debug, msg));
 
-        private static MessageLogger _info = new MessageLogger(msg => WriteLine(LogType.Info, msg));
-        public static MessageLogger Info => _info;
+        public static IMessageLogger Info { get; private set; } = new MessageLogger(msg => WriteLine(LogType.Info, msg));
 
-        private static MessageLogger _error = new MessageLogger(msg => WriteLine(LogType.Error, msg));
-        public static MessageLogger Error => _error;
+        public static IMessageLogger Error { get; private set; } = new MessageLogger(msg => WriteLine(LogType.Error, msg));
 
-        private static MessageLogger _warning = new MessageLogger(msg => WriteLine(LogType.Warning, msg));
-        public static MessageLogger Warning => _warning;
+        public static IMessageLogger Warning { get; private set; } = new MessageLogger(msg => WriteLine(LogType.Warning, msg));
 
         public static void RegisterClient(ILogClient client, LogType filter = LogType.All) => _aop.CreateCommand("RegisterClient", _ => PerformRegisterClient(client, filter)).Start();
         private static string PerformRegisterClient(ILogClient client, LogType filter)
@@ -78,11 +71,7 @@ namespace LibraryEx.Logging
     {
         private ActiveObjectPart _aop;
 
-        public WindowsTraceClient()
-        {
-            _aop = new ActiveObjectPart(nameof(WindowsTraceClient));
-            _aop.Initialize();
-        }
+        public WindowsTraceClient() => (_aop = new ActiveObjectPart(nameof(WindowsTraceClient))).Initialize();
 
         #region ILogClient
 
