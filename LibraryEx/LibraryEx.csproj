@@ -45,10 +45,15 @@
   <ItemGroup>
     <Compile Include="ActiveObject.cs" />
     <Compile Include="ActiveObserver.cs" />
+    <Compile Include="DataManipulations.cs" />
     <Compile Include="Logger.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="CommandDispatcher.cs" />
     <Compile Include="Mvvm.cs" />
+    <Compile Include="Protocol\Modbus\Modbus.cs" />
+    <Compile Include="Protocol\Modbus\ModbusRTU.cs" />
+    <Compile Include="Protocol\Modbus\ModbusTCP.cs" />
+    <Compile Include="SharedData.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
